@@ -50,9 +50,9 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .sync.busy i{background:var(--race);animation:pulse 1s infinite}
 .sync.err i{background:var(--warn)}
 @keyframes pulse{50%{opacity:.3}}
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(4,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(5,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
   padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
-nav.tabs button{border:0;background:transparent;padding:6px 2px;display:grid;justify-items:center;gap:3px;font:600 11.5px var(--f-display);color:var(--ink-3)}
+nav.tabs button{border:0;background:transparent;padding:6px 0;display:grid;justify-items:center;gap:3px;font:600 10.5px var(--f-display);color:var(--ink-3)}
 nav.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-selected="true"]{color:var(--ink)}
 nav.tabs button[aria-selected="true"] svg{stroke-width:2.3}
@@ -201,6 +201,57 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .tile:hover{filter:brightness(.97)}
 .gymdot{position:absolute;top:6px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--strength)}
 .carbs{padding:16px 18px;margin-bottom:12px}
+.kpis.fit{margin-top:8px}
+.fitcard{padding:14px 16px}
+.fitcard header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.fitcard .pline{margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.desc.fine{font-size:12.5px;color:var(--ink-3);margin:8px 0 0}
+ul.load li small{font-size:12.5px;color:var(--ink-3)}
+.tablewrap{overflow-x:auto;margin-top:8px}
+table.pred,table.splits{border-collapse:collapse;width:100%;font-size:14px}
+table.pred th,table.pred td,table.splits th,table.splits td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.pred th:first-child,table.splits th:first-child,table.splits td:first-child{text-align:left}
+table.pred thead th,table.splits thead th{font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+table.pred tbody th{font:700 15px var(--f-display)}
+table.pred td{font:700 16px var(--f-display)}
+table.splits tr.partial td{color:var(--ink-3)}
+table.splits td:nth-child(3){position:relative;min-width:84px}
+.pbar{position:absolute;left:4px;top:7px;bottom:7px;width:calc(var(--w) * .55);border-radius:4px;background:color-mix(in srgb,var(--quality) 16%,transparent);z-index:0}
+table.splits td{position:relative}
+.act-head{padding:16px 18px}
+.act-head h3{margin:2px 0 10px;font:800 21px/1.2 var(--f-display)}
+.act-big{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.act-big b{display:block;font:800 22px/1.1 var(--f-display);letter-spacing:-.02em}
+.act-big small{color:var(--ink-2);font-size:12px}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:4px 0}
+.metrics .m{padding:10px 14px;border-top:1px solid var(--line);min-width:0}
+.metrics .m:nth-child(-n+3){border-top:0}
+.metrics .m b{display:block;font:800 20px/1.15 var(--f-display);margin-top:3px}
+.metrics .m small{color:var(--ink-2);font-size:12px}
+.metrics .m .mono{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.runcharts{padding-bottom:12px}
+.rc{margin-top:10px}
+.rc-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--ink-2)}
+.rc-n{font:700 14px var(--f-display);color:var(--ink);display:flex;align-items:center;gap:6px}
+.rc-n i{display:inline-block;width:10px;height:10px;border-radius:3px}
+.rc-n small{font:500 11.5px var(--f-body);color:var(--ink-3)}
+.rc-h b{color:var(--ink);font-family:var(--f-display)}
+.rc-h small{color:var(--ink-3)}
+.rc svg{display:block;width:100%;height:62px;margin-top:3px;border-radius:6px;background:color-mix(in srgb,var(--bg) 60%,transparent)}
+.rc svg.rwstrip{height:14px;border-radius:4px;background:var(--line)}
+.rc svg.rcaxis{height:14px;background:none;margin-top:2px}
+.zones{display:grid;gap:8px;margin-top:10px}
+.runpick{margin-bottom:10px}
+.runpick .prow{cursor:pointer;border-left:4px solid transparent}
+.runpick .prow[aria-checked="true"]{background:linear-gradient(90deg,var(--go-soft) 0%,color-mix(in srgb,var(--go-soft) 40%,transparent) 60%,transparent 100%);border-left-color:var(--go)}
+.runpick .prow:hover{background-color:var(--bg)}
+.zrow{display:grid;grid-template-columns:118px 1fr 64px;gap:10px;align-items:center}
+.zl{font:700 15px var(--f-display)}
+.zl small,.zv small{display:block;font:500 11.5px var(--f-body);color:var(--ink-3)}
+.zbar{height:14px;background:var(--line);border-radius:99px;overflow:hidden}
+.zbar i{display:block;height:100%;border-radius:99px}
+.zv{text-align:right;font:700 14px var(--f-display)}
+.stack > .kpis, .stack > .fitcard{margin:0}
 .carb-big{font:800 34px/1.1 var(--f-display);letter-spacing:-.02em;margin-top:4px}
 .carb-big small{font:500 15px var(--f-body);color:var(--ink-2)}
 ul.load{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--line)}
@@ -292,6 +343,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
   <button role="tab" data-tab="summary" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Dashboard</span></button>
   <button role="tab" data-tab="training" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg><span>Training</span></button>
   <button role="tab" data-tab="calendar" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
+  <button role="tab" data-tab="activity" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg><span>Activity</span></button>
   <button role="tab" data-tab="nutrition" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0zM12 11V4M9 6.5c1-1.5 5-1.5 6 0"/></svg><span>Nutrition</span></button>
 </nav>
 <div id="sheetRoot"></div>
@@ -299,7 +351,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.27-5';
+const APP_VERSION = '2026.10.27-8';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -347,6 +399,12 @@ const Mock = (() => {
     },
     addMeal(m) { raw.nutrition = raw.nutrition || []; raw.nutrition.push([raw.nutrition.length + 2, Math.random().toString(36).slice(2, 10), m.date, m.meal, m.item, String(m.kcal), m.notes || '']); return { ok: true, data: this.getData() }; },
     addWeight(w) { raw.weights = (raw.weights || []).filter(r => r[1] !== w.date); raw.weights.push([0, w.date, String(w.kg)]); raw.weights.sort((a, b) => a[1].localeCompare(b[1])); return { ok: true, data: this.getData() }; },
+    activity(id) {
+      const ex = window.TELEMETRY_EXAMPLE_ACTIVITY; if (!ex) return { error: 'Preview: activities come from Garmin on the live app.' };
+      const recent = [['example', 'Example run A', 0, 10.1], ['example-2', 'Example run B', -2, 8.0], ['example-3', 'Example run C', -4, 14.0]].map(([rid, n, off, km]) => ({ id: rid, name: n, date: addDays(TODAY, off) + ' 06:00', type: 'running', km }));
+      const pick = recent.find(r => r.id === id) || recent[0];
+      return { ...JSON.parse(JSON.stringify(ex)), id: pick.id, name: pick.name + ' (preview only)', start: pick.date + ':00', recent };
+    },
     syncGarmin() { return { added: [], sleepFilled: 0, errors: ['Preview: Garmin sync runs on the live app only.'], data: this.getData() }; },
     deleteMeal(id) { raw.nutrition = (raw.nutrition || []).filter(r => r[1] !== id); return { ok: true, data: this.getData() }; }
   };
@@ -501,7 +559,12 @@ function build(raw) {
   const meals = (raw.nutrition || []).filter(r => r[1] && r[2]).map(r => ({ id: r[1], date: /^\d{4}-/.test(r[2]) ? r[2] : parseLoose(r[2]), meal: r[3], item: r[4], kcal: num(r[5]), notes: r[6] }));
 
   const weights = (raw.weights || []).filter(r => r[1] && num(r[2])).map(r => ({ date: /^\d{4}-/.test(r[1]) ? r[1] : parseLoose(r[1]), kg: num(r[2]) })).filter(w => w.date).sort((a, b) => a.date.localeCompare(b.date));
-  return { plan, weeks, current, block, history, runs, races, raceDate, types, shoes, meals, weights, done };
+  const garminDaily = (raw.garminDaily || []).filter(r => /^\d{4}-\d\d-\d\d/.test(r[1])).map(r => {
+    const n = v => (v === '' || v == null ? null : num(v));
+    return { date: r[1].slice(0, 10), hrv: n(r[2]), hrv7: n(r[3]), hrvStatus: r[4] || '', hrvLo: n(r[5]), hrvHi: n(r[6]), rhr: n(r[7]), rhr7: n(r[8]), bb: n(r[9]), stress: n(r[10]), load: n(r[11]), vo2: n(r[12]), sleep: n(r[13]) };
+  }).sort((a, b) => a.date.localeCompare(b.date));
+  const fitness = (raw.fitness || []).map(r => ({ label: /^\d{4}-\d\d-\d\d$/.test(r[0]) ? MON[+r[0].slice(5, 7) - 1] + ' ' + r[0].slice(0, 4) : r[0], vo2: num(r[1]) || null, ltHr: r[2], ltPace: r[3] })).filter(f => f.label);
+  return { plan, weeks, current, block, history, runs, races, raceDate, types, shoes, meals, weights, garminDaily, fitness, done };
 }
 
 /* ================= rendering ================= */
@@ -511,7 +574,7 @@ function setSync(mode, text) { const s = $('#sync'); s.className = 'sync mono ' 
 function render() {
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === state.tab)));
   if (!M) return;
-  ({ summary: renderSummary, training: renderTraining, calendar: renderCalendar, nutrition: renderNutrition })[state.tab]();
+  ({ summary: renderSummary, training: renderTraining, calendar: renderCalendar, activity: renderActivity, nutrition: renderNutrition })[state.tab]();
 }
 
 function raceRow(r) {
@@ -612,6 +675,8 @@ function renderSummary() {
       <h2 class="sec" style="margin:8px 0 0">Upcoming races</h2>
       <p class="sub" style="margin:0">Tap a race for details.</p>
       ${(() => { const up = races.filter(r => !r.date || r.date >= TODAY); const ni = up.findIndex(r => r.date); return up.map((r, i) => raceCard(r, i === ni)).join('') || '<div class="card empty">No upcoming races in the Races tab.</div>'; })()}
+
+      ${fitnessSection()}
 
       <h2 class="sec" style="margin-bottom:0">Trends</h2>
       ${filterBar()}
@@ -1041,6 +1106,287 @@ function nutritionTop() {
     </form>`;
 }
 
+/* ================= Fitness (Dashboard) ================= */
+function lastVal(arr, key) { for (let i = arr.length - 1; i >= 0; i--) if (arr[i][key] != null && arr[i][key] !== '') return arr[i]; return null; }
+
+/* Daniels' VO2 cost and %VO2max curves: time (min) to run d metres at a given VDOT. */
+function vdotTime(vdot, d) {
+  const need = t => { const v = d / t; const vo2 = -4.6 + 0.182258 * v + 0.000104 * v * v; const pct = 0.8 + 0.1894393 * Math.exp(-0.012778 * t) + 0.2989558 * Math.exp(-0.1932605 * t); return vo2 / pct; };
+  let lo = 5, hi = 600;
+  for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (need(mid) > vdot) lo = mid; else hi = mid; }
+  return (lo + hi) / 2 * 60;
+}
+const fmtDur = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${pad(m)}:${pad(x)}` : `${m}:${pad(x)}`; };
+
+function fitnessSection() {
+  const dly = M.garminDaily;
+  const today = dly.length ? dly[dly.length - 1] : null;
+  // VO2 max: Garmin (via Fitness Age) first, else the sheet's fitness history
+  const gV = lastVal(dly, 'vo2');
+  const sheetV = M.fitness.filter(f => f.vo2).slice(-1)[0];
+  const vo2 = gV ? { v: gV.vo2, src: `Garmin, ${fmtShort(gV.date)}` } : sheetV ? { v: sheetV.vo2, src: `Your sheet, ${sheetV.label}` } : null;
+  const vo2Hist = M.fitness.filter(f => f.vo2).map(f => f.vo2);
+  const lt = M.fitness.filter(f => f.ltHr || f.ltPace).slice(-1)[0];
+
+  // Readiness signals
+  const sig = [];
+  const hrvRow = lastVal(dly, 'hrv'), rhrRow = lastVal(dly, 'rhr'), bbRow = lastVal(dly, 'bb'), slRow = lastVal(dly, 'sleep');
+  let flags = 0;
+  if (hrvRow) {
+    const low = hrvRow.hrvLo && hrvRow.hrv < hrvRow.hrvLo, st = String(hrvRow.hrvStatus || '').toUpperCase();
+    const bad = low || /LOW|POOR|UNBALANCED/.test(st);
+    if (bad) flags++;
+    sig.push(['HRV last night', `${Math.round(hrvRow.hrv)} ms`, hrvRow.hrvLo ? `baseline ${Math.round(hrvRow.hrvLo)}–${Math.round(hrvRow.hrvHi)}${st && st !== 'NONE' ? ' · ' + st.toLowerCase() : ''}` : (st || ''), bad ? 'warn' : 'go']);
+  }
+  if (rhrRow) {
+    const diff = rhrRow.rhr7 ? rhrRow.rhr - rhrRow.rhr7 : 0, bad = diff >= 5;
+    if (bad) flags++;
+    sig.push(['Resting HR', `${Math.round(rhrRow.rhr)} bpm`, rhrRow.rhr7 ? `${diff > 0 ? '+' : ''}${Math.round(diff)} vs 7-day avg` : '', bad ? 'warn' : 'go']);
+  }
+  if (bbRow) { const bad = bbRow.bb < 40; if (bad) flags++; sig.push(['Body Battery at wake', `${Math.round(bbRow.bb)}`, bbRow.bb >= 70 ? 'well charged' : bbRow.bb >= 40 ? 'moderate' : 'low', bad ? 'warn' : 'go']); }
+  if (slRow) { const bad = slRow.sleep < 6; if (bad) flags++; sig.push(['Sleep', `${slRow.sleep} h`, fmtShort(slRow.date), bad ? 'warn' : 'go']); }
+  const verdict = !sig.length ? null : flags === 0 ? ['Ready to train', 'go'] : flags === 1 ? ['Some fatigue showing', 'amber'] : ['Go easy today', 'warn'];
+
+  // Training load from Garmin's per-activity load
+  const loadByDate = {}; dly.forEach(r => { if (r.load) loadByDate[r.date] = r.load; });
+  const sumLoad = (a, b) => { let s = 0; for (let d = a; d <= b; d = addDays(d, 1)) s += loadByDate[d] || 0; return s; };
+  const acute = sumLoad(addDays(TODAY, -6), TODAY), chronic = sumLoad(addDays(TODAY, -27), TODAY) / 4;
+  const ratio = chronic ? acute / chronic : null;
+  const band = ratio == null ? null : ratio < 0.8 ? ['Low', 'rest'] : ratio <= 1.3 ? ['Optimal', 'go'] : ratio <= 1.5 ? ['High', 'amber'] : ['Very high', 'warn'];
+  const hasLoad = Object.keys(loadByDate).length > 0;
+
+  // Race predictions
+  const race = M.runs.filter(r => r.kind === 'race' && r.km >= 5 && secs(r.time)).pop();
+  const dists = [['5K', 5000], ['10K', 10000], ['Half', 21097.5], ['Marathon', 42195]];
+  const fromRace = race ? dists.map(([, m]) => secs(race.time) * Math.pow(m / (race.km * 1000), 1.06)) : null;
+  const fromVo2 = vo2 ? dists.map(([, m]) => vdotTime(vo2.v, m)) : null;
+
+  const loadBars = (() => {
+    if (!hasLoad) return '';
+    const days = []; for (let i = 27; i >= 0; i--) days.push(addDays(TODAY, -i));
+    const max = Math.max(50, ...days.map(d => loadByDate[d] || 0)), W = 300, H = 60, bw = W / 28;
+    return `<svg viewBox="0 0 ${W} ${H + 12}" class="spark" role="img" aria-label="Daily training load, last 28 days">${days.map((d, i) => { const v = loadByDate[d] || 0, h = v / max * H; return `<rect x="${i * bw + 1}" y="${H - h}" width="${bw - 2}" height="${Math.max(h, v ? 2 : 0)}" rx="1.5" fill="${i >= 21 ? 'var(--quality)' : 'color-mix(in srgb,var(--quality) 40%,transparent)'}" data-tip="${esc(fmtShort(d))}|Load ${Math.round(v)}"/>`; }).join('')}
+      <text x="0" y="${H + 11}" font-size="9" fill="var(--ink-3)" font-family="var(--f-mono)">4 wk ago</text><text x="${W}" y="${H + 11}" text-anchor="end" font-size="9" fill="var(--ink-3)" font-family="var(--f-mono)">today</text></svg>`;
+  })();
+
+  const waiting = '<p class="desc">Fills in after the Garmin sync runs.</p>';
+  return `
+    <h2 class="sec" style="margin:14px 0 0">Fitness</h2>
+    <div class="kpis fit">
+      <div class="card kpi"><span class="mono">VO2 max</span><b class="num">${vo2 ? vo2.v : '—'}</b><small>${vo2 ? esc(vo2.src) : 'Not available yet'}${vo2Hist.length > 1 ? ` · ${vo2Hist[vo2Hist.length - 1] - vo2Hist[0] >= 0 ? '+' : ''}${(vo2Hist[vo2Hist.length - 1] - vo2Hist[0]).toFixed(1)} since ${esc(M.fitness.find(f => f.vo2).label)}` : ''}</small></div>
+      <div class="card kpi"><span class="mono">Lactate threshold</span><b class="num">${lt ? esc(lt.ltPace || '—') : '—'}<small>${lt && lt.ltPace ? ' /km' : ''}</small></b><small>${lt && lt.ltHr ? `${esc(lt.ltHr)} bpm · ${esc(lt.label)}` : 'From your sheet'}</small></div>
+    </div>
+    <div class="card fitcard">
+      <header><div><div class="mono">Readiness check</div>${verdict ? `<div class="pline"><span class="dot" style="background:var(--${verdict[1] === 'amber' ? 'long' : verdict[1]})"></span> ${verdict[0]}</div>` : '<div class="pline">Waiting for Garmin data</div>'}</div></header>
+      ${sig.length ? `<ul class="load">${sig.map(([k, v, sub, c]) => `<li><span>${esc(k)}<br><small class="${c === 'warn' ? 'warn-t' : ''}">${esc(sub)}</small></span><span class="num" style="font:700 16px var(--f-display);color:var(--ink)">${esc(v)}</span></li>`).join('')}</ul>` : waiting}
+      <p class="desc fine">Telemetry's own check from Garmin's HRV, resting HR, Body Battery and sleep. Garmin's Training Readiness and Training Status aren't available through its API.</p>
+    </div>
+    <div class="card fitcard">
+      <header><div><div class="mono">Training load</div>${ratio != null ? `<div class="pline num">${Math.round(acute)} <small>7-day · ratio ${ratio.toFixed(2)}</small> <span class="chip k-${band[1] === 'go' ? 'easy' : band[1] === 'amber' ? 'long' : band[1] === 'warn' ? 'race' : 'rest'}" style="margin-left:4px">${band[0]}</span></div>` : '<div class="pline">—</div>'}</div></header>
+      ${hasLoad ? loadBars + `<p class="desc fine">Acute load is the last 7 days of Garmin's per-activity load; the ratio compares it with your 4-week weekly average (0.8–1.3 is the usual sweet spot).</p>` : waiting}
+    </div>
+    <div class="card fitcard">
+      <header><div class="mono">Race predictions</div></header>
+      <div class="tablewrap"><table class="pred"><thead><tr><th></th>${fromVo2 ? `<th>VO2 max ${vo2.v}</th>` : ''}${fromRace ? `<th>Your ${km1(race.km)}K ${esc(race.time.replace(/^0:/, ''))}</th>` : ''}</tr></thead>
+      <tbody>${dists.map(([n], i) => `<tr><th>${n}</th>${fromVo2 ? `<td class="num">${fmtDur(fromVo2[i])}</td>` : ''}${fromRace ? `<td class="num">${fmtDur(fromRace[i])}</td>` : ''}</tr>`).join('')}</tbody></table></div>
+      <p class="desc fine">Telemetry estimates, not Garmin's predictor. VO2 max column uses Daniels' VDOT tables; race column scales your latest race (Riegel). Heat and humidity in Bangkok usually make real times slower than the VO2 max column.</p>
+    </div>`;
+}
+
+/* ================= Activity tab ================= */
+state.act = null; state.actId = null; state.actLoading = false; state.actError = '';
+state.actCache = {};
+const recentRuns = a => (a && a.recent || []).filter(r => /run/i.test(r.type || '')).slice(0, 3);
+async function fetchActivity(id) {
+  if (id && state.actCache[id]) return state.actCache[id];
+  const r = await API.call('activity', id || null);
+  if (r && r.id) state.actCache[r.id] = r;
+  return r;
+}
+async function loadActivity(id) {
+  if (id && state.actCache[id]) { state.act = state.actCache[id]; state.actId = id; if (state.tab === 'activity') render(); return; }
+  state.actLoading = true; state.actError = ''; state.actId = id || null;
+  if (state.tab === 'activity') render();
+  try {
+    const r = await fetchActivity(id);
+    if (r && r.error && !r.id) { state.actError = r.error; state.act = r; }
+    else {
+      if (!id || state.actId === id) state.act = r;
+      // fetch the other two of the latest three runs in the background so switching is instant
+      if (!state.actPrefetched) { state.actPrefetched = true; (async () => { for (const x of recentRuns(r)) { if (!state.actCache[x.id]) { try { const y = await fetchActivity(x.id); y.recent = y.recent || r.recent; } catch (e) {} } } })(); }
+    }
+  } catch (e) {
+    state.actError = /Unknown action|Garmin|key/i.test(String(e && e.message)) ? `Garmin isn't connected yet (${e.message}). Finish the Garmin.gs setup, then reopen this tab.` : 'Could not load the activity: ' + (e && e.message ? e.message : e);
+  }
+  state.actLoading = false;
+  if (state.tab === 'activity') render();
+}
+
+function renderActivity() {
+  if (!state.act && !state.actLoading && !state.actError) { loadActivity(null); }
+  const a = state.act;
+  if (state.actLoading && !a) { view.innerHTML = `<h2 class="sec">Latest activity</h2><div class="card empty">Loading from Garmin…</div>`; return; }
+  if (!a || (!a.id && state.actError)) { view.innerHTML = `<h2 class="sec">Latest activity</h2><div class="card empty">${esc(state.actError || 'No activity yet.')}<br><br><button class="btn" id="actReload">Try again</button></div>`; return; }
+  const km = (a.distanceM || 0) / 1000, pace = a.avgSpeed ? 1000 / a.avgSpeed : 0, gap = a.gapSpeed ? 1000 / a.gapSpeed : 0;
+  const rw = a.runWalk && a.runWalk.length ? (() => { const g = t => a.runWalk.filter(x => new RegExp(t, 'i').test(x.type)).reduce((s, x) => s + (x.durationS || 0), 0); return { runS: g('RUN'), walkS: g('WALK'), standS: g('STAND'), garmin: true }; })() : a.runWalkEst;
+  const rwTot = rw ? rw.runS + rw.walkS + rw.standS : 0;
+  const z = a.zones, zTot = z ? z.secs.reduce((s, v) => s + v, 0) : 0;
+  const zoneColors = ['var(--rest)', '#9AA3B8', 'var(--quality)', 'var(--easy)', 'var(--long)', 'var(--race)'];
+  const metric = (label, val, sub) => `<div class="m"><span class="mono">${label}</span><b class="num">${val}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+  const top3 = recentRuns(a), top3Ids = new Set(top3.map(r => r.id));
+  const fmtWhen = r => { const ds = r.date.slice(0, 10); return `${ds === TODAY ? 'Today' : ds === addDays(TODAY, -1) ? 'Yesterday' : fmtDay(ds)}${r.date.length > 11 ? ' · ' + r.date.slice(11, 16) : ''}`; };
+  const opts = (a.recent || []).filter(r => !top3Ids.has(r.id)).map(r => `<option value="${esc(r.id)}" ${r.id === a.id ? 'selected' : ''}>${esc(r.date.slice(5, 10).replace('-', '/'))} · ${esc(r.name || r.type)}${r.km ? ` · ${km1(r.km)} km` : ''}</option>`).join('');
+  view.innerHTML = `
+    <div class="subrow" style="margin-top:14px"><h2 class="sec" style="margin:0">${a.example ? 'Example activity' : 'Latest activity'}</h2>${state.actLoading ? '<span class="pside">Loading…</span>' : ''}</div>
+    ${top3.length ? `<div class="card panel runpick" role="radiogroup" aria-label="Latest runs">${top3.map((r, i) => `<button class="prow" role="radio" aria-checked="${r.id === a.id}" data-act="${esc(r.id)}">
+        <div style="min-width:0"><div class="mono">${i === 0 ? 'Latest run · ' : ''}${esc(fmtWhen(r))}</div><div class="pline one">${esc(r.name || 'Run')}</div></div>
+        <span class="pside num">${r.km ? km1(r.km) + ' km' : ''}${state.actLoading && state.actId === r.id ? ' · loading' : ''}</span></button>`).join('')}</div>` : ''}
+    ${opts ? `<label class="f" style="margin:0 0 10px">Older activities<select id="actPick"><option value="">Choose…</option>${opts}</select></label>` : ''}
+    ${a.example ? '<div class="banner" style="margin:0 0 10px">Example data. Your real latest run appears here once the Garmin sync is set up.</div>' : ''}
+    <div class="card act-head">
+      <div class="mono">${esc((a.start || '').replace(' ', ' · ').slice(0, 18))}${a.teLabel ? ' · ' + esc(String(a.teLabel).toLowerCase().replace(/_/g, ' ')) : ''}</div>
+      <h3>${esc(a.name || 'Activity')}</h3>
+      <div class="act-big">
+        <div><b class="num">${km1(km)}</b><small>km</small></div>
+        <div><b class="num">${fmtDur(a.durationS || 0)}</b><small>time</small></div>
+        <div><b class="num">${pace ? paceStr(pace) : '—'}</b><small>/km</small></div>
+        <div><b class="num">${a.avgHR ? Math.round(a.avgHR) : '—'}</b><small>avg bpm</small></div>
+      </div>
+    </div>
+    <div class="card chart runcharts"><h3>Over the run</h3>${runCharts(a, rw, rwTot)}</div>
+    <div class="card metrics">
+      ${metric('Cadence', a.cadence ? Math.round(a.cadence) : '—', 'spm' + (a.maxCadence ? ` · max ${Math.round(a.maxCadence)}` : ''))}
+      ${metric('Stride', a.strideCm ? (a.strideCm / 100).toFixed(2) : '—', 'm')}
+      ${metric('GCT', a.gctMs ? Math.round(a.gctMs) : '—', 'ms' + (a.gctBalance ? ` · ${a.gctBalance.toFixed(1)}% L` : ''))}
+      ${metric('Vert. osc.', a.vertOscCm ? a.vertOscCm.toFixed(1) : '—', 'cm' + (a.vertRatio ? ` · ratio ${a.vertRatio.toFixed(1)}%` : ''))}
+      ${metric('GAP', gap ? paceStr(gap) : '—', '/km')}
+      ${metric('Max HR', a.maxHR ? Math.round(a.maxHR) : '—', 'bpm' + (a.recoveryHR ? ` · recovery ${Math.round(a.recoveryHR)}` : ''))}
+      ${metric('Effect', a.te ? a.te.toFixed(1) : '—', a.ate ? `anaerobic ${a.ate.toFixed(1)}` : 'aerobic')}
+      ${metric('Load', a.load ? Math.round(a.load) : '—', 'Garmin load')}
+      ${metric('Perf. cond.', '—', 'not in Garmin API')}
+      ${metric('Elevation', a.elevGain != null ? '+' + Math.round(a.elevGain) : '—', a.elevLoss != null ? `−${Math.round(a.elevLoss)} m` : 'm')}
+      ${metric('Temp', a.tempC != null ? Math.round(a.tempC) + '°' : '—', 'watch sensor')}
+      ${metric('Calories', a.calories ? Math.round(a.calories) : '—', 'kcal')}
+    </div>
+    ${z && zTot ? `<div class="card chart"><h3>Time in heart-rate zones</h3>
+      <div class="zones">${[5, 4, 3, 2, 1].map(i => { const v = z.secs[i], lo = z.floors[i - 1], hi = i < 5 ? z.floors[i] - 1 : z.max; return `<div class="zrow"><span class="zl">Zone ${i}<small>${['', 'Warm up', 'Easy', 'Aerobic', 'Threshold', 'Maximum'][i]} · ${lo}–${hi || ''}</small></span><span class="zbar"><i style="width:${zTot ? v / zTot * 100 : 0}%;background:${zoneColors[i]}"></i></span><span class="zv num">${fmtDur(v)}<small>${Math.round(v / zTot * 100)}%</small></span></div>`; }).join('')}</div></div>` : ''}
+    ${a.splits && a.splits.length ? `<div class="card chart"><h3>Splits</h3><div class="tablewrap"><table class="splits"><thead><tr><th>km</th><th>Time</th><th>Pace</th><th>HR</th><th>Cad</th><th>GCT</th><th>Stride</th></tr></thead><tbody>
+      ${(() => { const ps = a.splits.map(s => s.timeS / (s.distM / 1000)), fast = Math.min(...ps), slow = Math.max(...ps); return a.splits.map((s, i) => `<tr${s.partial ? ' class="partial"' : ''}><td class="num">${s.partial ? km1(s.km) : s.km}</td><td class="num">${fmtDur(s.timeS)}</td><td class="num"><span class="pbar" style="--w:${slow > fast ? 30 + 70 * (slow - ps[i]) / (slow - fast) : 100}%"></span>${paceStr(ps[i])}</td><td class="num">${s.hr ? Math.round(s.hr) : '—'}</td><td class="num">${s.cad ? Math.round(s.cad) : '—'}</td><td class="num">${s.gct ? Math.round(s.gct) : '—'}</td><td class="num">${s.step ? s.step.toFixed(2) : '—'}</td></tr>`).join(''); })()}
+      </tbody></table></div></div>` : a.fitError ? `<div class="card empty">${esc(a.fitError)}</div>` : ''}`;
+}
+
+/* Stacked charts over the course of a run, sharing one distance axis.
+   trace rows: [distance m, pace s/km, HR, cadence spm, stride m, GCT ms, state R/W/S, elapsed s] */
+function runCharts(a, rw, rwTot) {
+  const tr = (a.trace || []).filter(p => p[0] != null);
+  if (tr.length < 3) return '<div class="empty">No samples recorded for this activity.</div>';
+  const maxD = tr[tr.length - 1][0] || 1, W = 340, L = 6, R = 6, H = 62, T = 6, B = 6;
+  const x = d => L + (W - L - R) * d / maxD;
+
+  // walking / standing stretches, shaded on every chart
+  const bands = [];
+  let open = null;
+  tr.forEach((p, i) => {
+    const off = p[6] && p[6] !== 'R';
+    if (off && !open) open = { a: i ? tr[i - 1][0] : p[0], s: p[6] };
+    if (!off && open) { bands.push({ a: open.a, b: p[0] }); open = null; }
+  });
+  if (open) bands.push({ a: open.a, b: maxD });
+  const bandSvg = bands.map(b => `<rect x="${x(b.a)}" y="0" width="${Math.max(1.5, x(b.b) - x(b.a))}" height="${H}" fill="var(--long)" opacity=".13"/>`).join('');
+
+  const pct = (arr, q) => { const s = [...arr].sort((m, n) => m - n); return s[Math.min(s.length - 1, Math.max(0, Math.round((s.length - 1) * q)))]; };
+  const metrics = [
+    { k: 1, name: 'Pace', unit: '/km', color: 'var(--quality)', fmt: v => paceStr(v), invert: true, ok: v => v > 120 && v < 1500 },
+    { k: 2, name: 'Heart rate', unit: 'bpm', color: 'var(--race)', fmt: v => Math.round(v) },
+    { k: 3, name: 'Cadence', unit: 'spm', color: 'var(--easy)', fmt: v => Math.round(v) },
+    { k: 4, name: 'Stride', unit: 'm', color: 'var(--strength)', fmt: v => v.toFixed(2) },
+    { k: 5, name: 'Ground contact', unit: 'ms', color: 'var(--long)', fmt: v => Math.round(v) }
+  ];
+
+  // shared tap targets: one column every ~2.5% of the run, showing every metric at that point
+  const cols = 40, colW = (W - L - R) / cols;
+  const tipAt = d => {
+    let best = tr[0]; for (const p of tr) { if (Math.abs(p[0] - d) < Math.abs(best[0] - d)) best = p; }
+    const st = best[6] === 'W' ? ' · walking' : best[6] === 'S' ? ' · stopped' : '';
+    return [`${(best[0] / 1000).toFixed(2)} km · ${fmtDur(best[7] || 0)}${st}`,
+      `Pace ${best[1] && best[1] < 1500 ? paceStr(best[1]) : '—'} · HR ${best[2] || '—'}`,
+      `Cadence ${best[3] || '—'} · Stride ${best[4] != null ? best[4].toFixed(2) + ' m' : '—'}`,
+      best[5] ? `GCT ${best[5]} ms` : ''].filter(Boolean).join('|');
+  };
+  const hits = Array.from({ length: cols }, (_, i) => { const d = (i + 0.5) / cols * maxD; return `<rect class="hit" x="${L + i * colW}" y="0" width="${colW}" height="${H}" fill="transparent" data-tip="${esc(tipAt(d))}"/>`; }).join('');
+
+  const charts = metrics.map(m => {
+    const pts = tr.filter(p => p[m.k] != null && (!m.ok || m.ok(p[m.k])));
+    if (pts.length < 3) return '';
+    const runVals = pts.filter(p => p[6] === 'R' || !p[6]).map(p => p[m.k]);
+    const all = pts.map(p => p[m.k]);
+    let lo = pct(all, 0.03), hi = pct(all, 0.97);
+    if (hi - lo < 1e-6) { lo -= 1; hi += 1; }
+    const padv = (hi - lo) * 0.12; lo -= padv; hi += padv;
+    const clamp = v => Math.max(lo, Math.min(hi, v));
+    const y = v => m.invert ? T + (H - T - B) * (clamp(v) - lo) / (hi - lo) : T + (H - T - B) * (1 - (clamp(v) - lo) / (hi - lo));
+    const avg = (runVals.length ? runVals : all).reduce((s, v) => s + v, 0) / (runVals.length || all.length);
+    let d = '', on = false, prev = null;
+    tr.forEach(p => {
+      const v = p[m.k], good = v != null && (!m.ok || m.ok(v));
+      if (good) { d += `${on && prev != null && p[0] - prev < maxD / 30 ? 'L' : 'M'}${x(p[0]).toFixed(1)},${y(v).toFixed(1)}`; on = true; prev = p[0]; } else on = false;
+    });
+    const area = `${d}L${x(pts[pts.length - 1][0]).toFixed(1)},${H}L${x(pts[0][0]).toFixed(1)},${H}Z`;
+    const fast = m.invert ? Math.min(...runVals.length ? runVals : all) : Math.max(...runVals.length ? runVals : all);
+    return `<div class="rc">
+      <div class="rc-h"><span class="rc-n"><i style="background:${m.color}"></i>${m.name}</span><span class="num">avg <b>${m.fmt(avg)}</b> ${m.unit}<small> · ${m.invert ? 'best' : 'max'} ${m.fmt(fast)}</small></span></div>
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${m.name} over the run, average ${m.fmt(avg)} ${m.unit}">
+        ${bandSvg}
+        <line x1="${L}" x2="${W - R}" y1="${y(avg)}" y2="${y(avg)}" stroke="${m.color}" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/>
+        <path d="${m.invert ? '' : area}" fill="${m.color}" opacity=".10"/>
+        <path d="${d}" fill="none" stroke="${m.color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+        ${hits}
+      </svg></div>`;
+  }).join('');
+
+  // run / walk strip on the same axis
+  let strip = '';
+  for (let i = 1; i < tr.length; i++) {
+    const s = tr[i][6] || 'R', c = s === 'W' ? 'var(--long)' : s === 'S' ? 'var(--rest)' : 'var(--easy)';
+    strip += `<rect x="${x(tr[i - 1][0])}" y="0" width="${Math.max(0.6, x(tr[i][0]) - x(tr[i - 1][0]) + 0.4)}" height="14" fill="${c}"/>`;
+  }
+  const kmStep = maxD > 15000 ? 5 : maxD > 6000 ? 2 : 1;
+  let ticks = '';
+  for (let k = 0; k * 1000 <= maxD; k += kmStep) ticks += `<text x="${Math.min(W - 10, Math.max(8, x(k * 1000)))}" y="11" text-anchor="middle" font-size="10" fill="var(--ink-3)" font-family="var(--f-mono)">${k}${k === 0 ? ' km' : ''}</text>`;
+
+  const legend = rw && rwTot ? [['Run', rw.runS, 'var(--easy)'], ['Walk', rw.walkS, 'var(--long)'], ['Stand', rw.standS, 'var(--rest)']].filter(r => r[1] > 0)
+    .map(([n, v, c]) => `<span><i style="background:${c}"></i>${n} ${fmtDur(v)} · ${Math.round(v / rwTot * 100)}%</span>`).join('') : '';
+
+  return `${charts}
+    <div class="rc">
+      <div class="rc-h"><span class="rc-n"><i style="background:var(--easy)"></i>Run / walk${rw && !rw.garmin ? ' <small>(from pace)</small>' : ''}</span></div>
+      <svg viewBox="0 0 ${W} 14" preserveAspectRatio="none" class="rwstrip" role="img" aria-label="Running and walking over the run">${strip}</svg>
+      <svg viewBox="0 0 ${W} 14" class="rcaxis" aria-hidden="true">${ticks}</svg>
+      ${legend ? `<div class="legend" style="margin-top:2px">${legend}</div>` : ''}
+    </div>
+    <p class="desc fine" style="margin-top:4px">Shaded stretches are walking or stopped. Tap any chart to read every metric at that point.</p>`;
+}
+
+function actTrace(a) {
+  const tr = (a.trace || []).filter(p => p[0] != null);
+  if (tr.length < 3) return '<div class="empty">No pace/HR samples.</div>';
+  const W = 340, H = 170, L = 34, R = 30, T = 10, B = 22;
+  const maxD = tr[tr.length - 1][0] || 1;
+  const pv = tr.map(p => p[1]).filter(v => v && v < 1200);
+  const hv = tr.map(p => p[2]).filter(Boolean);
+  const pMin = Math.floor(Math.min(...pv) / 30) * 30, pMax = Math.ceil(Math.max(...pv) / 30) * 30 || pMin + 60;
+  const hMin = Math.floor(Math.min(...hv) / 10) * 10, hMax = Math.ceil(Math.max(...hv) / 10) * 10 || hMin + 20;
+  const x = d => L + (W - L - R) * d / maxD, yp = v => T + (H - T - B) * (v - pMin) / (pMax - pMin || 1), yh = v => T + (H - T - B) * (1 - (v - hMin) / (hMax - hMin || 1));
+  let g = '';
+  for (let i = 0; i <= 3; i++) { const pV = pMin + (pMax - pMin) * i / 3, hV = hMax - (hMax - hMin) * i / 3, yy = yp(pV);
+    g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L - 4}" y="${yy + 3.5}" text-anchor="end" font-size="9.5" fill="var(--quality)" font-family="var(--f-mono)">${paceStr(pV)}</text><text x="${W - R + 4}" y="${yy + 3.5}" font-size="9.5" fill="var(--race)" font-family="var(--f-mono)">${Math.round(hV)}</text>`; }
+  const path = (key, f) => { let s = '', on = false; tr.forEach(p => { const v = p[key]; if (v && (key !== 1 || v < 1200)) { s += `${on ? 'L' : 'M'}${x(p[0]).toFixed(1)},${f(v).toFixed(1)}`; on = true; } else on = false; }); return s; };
+  g += `<path d="${path(1, yp)}" fill="none" stroke="var(--quality)" stroke-width="1.8" stroke-linejoin="round"/><path d="${path(2, yh)}" fill="none" stroke="var(--race)" stroke-width="1.8" stroke-linejoin="round"/>`;
+  const kmStep = maxD > 15000 ? 5 : maxD > 6000 ? 2 : 1;
+  for (let k = 0; k * 1000 <= maxD; k += kmStep) g += `<text x="${x(k * 1000)}" y="${H - 6}" text-anchor="middle" font-size="9.5" fill="var(--ink-3)" font-family="var(--f-mono)">${k}${k === 0 ? ' km' : ''}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pace and heart rate over distance">${g}</svg>`;
+}
+
 let mealDraft = { date: TODAY, meal: 'Breakfast' };
 function renderNutrition() {
   const meals = M.meals;
@@ -1268,6 +1614,8 @@ document.addEventListener('click', e => {
   if (t.id === 'logFuel') { const n = +t.dataset.gels; closeSheet(); run('addMeal', { date: t.dataset.date, meal: 'Run fuel', item: `${n} gels (${n * GEL_G} g carbs)`, kcal: n * GEL_G * 4 }, 'Run fuel logged'); return; }
   if (t.id === 'garminBtn') { syncGarminNow(); return; }
   if (t.dataset.strength) { openLog({ date: t.dataset.strength, activity: 'Strength: Push', type: '', title: 'Strength', run: false, preferS2: true }); return; }
+  if (t.dataset.act) { loadActivity(t.dataset.act); return; }
+  if (t.id === 'actReload') { state.act = null; loadActivity(state.actId); return; }
   if (t.id === 'calEarlier') { state.calEarlier = !state.calEarlier; render(); return; }
   if (t.dataset.race) { const r = M.races[+t.dataset.race]; if (r) openRace(r); return; }
   if (t.id === 'editHist' && sheetCtx && sheetCtx.detail) { const h = sheetCtx.detail, p = M.plan.find(x => String(x.row) === t.dataset.plan); openLog({ ...h, ...(p ? { logRow: p.row, week: p.week, planned: p.planned } : {}), activity: h.activity, title: h.type || prettyTitle(h.activity), done: true }); return; }
@@ -1313,6 +1661,7 @@ document.addEventListener('submit', e => {
 
 // Inline "Actual km" field: saves on blur / Enter
 document.addEventListener('change', e => {
+  if (e.target.id === 'actPick') { if (e.target.value) loadActivity(e.target.value); return; }
   const inp = e.target.closest('[data-km]');
   if (!inp) return;
   const p = M.plan.find(x => String(x.row) === inp.dataset.km);
