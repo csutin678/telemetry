@@ -289,7 +289,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
   <main id="view"><div class="empty">Loading your sheet…</div></main>
 </div>
 <nav class="tabs" role="tablist" aria-label="Sections">
-  <button role="tab" data-tab="summary" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Summary</span></button>
+  <button role="tab" data-tab="summary" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Dashboard</span></button>
   <button role="tab" data-tab="training" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg><span>Training</span></button>
   <button role="tab" data-tab="calendar" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
   <button role="tab" data-tab="nutrition" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0zM12 11V4M9 6.5c1-1.5 5-1.5 6 0"/></svg><span>Nutrition</span></button>
@@ -299,6 +299,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
+const APP_VERSION = '2026.10.27-5';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -418,7 +419,7 @@ function prettyTitle(activity, type) {
 /* ================= model ================= */
 let RAW = null, M = null;
 const state = { tab: 'summary', week: null, calMonth: null, calSel: TODAY };
-try { const t = localStorage.getItem('telemetry.tab'); if (t) state.tab = t; const m = localStorage.getItem('telemetry.trainMode'); if (m) state.trainMode = m; } catch (e) {}
+try { const m = localStorage.getItem('telemetry.trainMode'); if (m) state.trainMode = m; } catch (e) {}
 
 function build(raw) {
   const c = (r, L) => r['ABCDEFGHIJKLMNOPQ'.indexOf(L) + 1] ?? '';
@@ -612,7 +613,7 @@ function renderSummary() {
       <p class="sub" style="margin:0">Tap a race for details.</p>
       ${(() => { const up = races.filter(r => !r.date || r.date >= TODAY); const ni = up.findIndex(r => r.date); return up.map((r, i) => raceCard(r, i === ni)).join('') || '<div class="card empty">No upcoming races in the Races tab.</div>'; })()}
 
-      <h2 class="sec" style="margin-bottom:0">Dashboard</h2>
+      <h2 class="sec" style="margin-bottom:0">Trends</h2>
       ${filterBar()}
       <div class="kpis">
         <div class="card kpi"><span class="mono">Total run km</span><b class="num">${km1(total)}</b><small>${fr.length} runs logged</small></div>
@@ -626,6 +627,7 @@ function renderSummary() {
       <div class="card chart"><h3>Long-run progression</h3><div class="legend"><span><i style="background:var(--long)"></i>Longest run each week, km</span></div>${longRunChart()}</div>
       <div><h2 class="sec" style="margin-top:12px">Runs in view</h2></div>
       <div class="card list">${fr.slice(-8).reverse().map(runRow).join('') || '<div class="empty">No runs match these filters.</div>'}</div>
+      <p class="mono" style="text-align:center;margin:8px 0 0">Telemetry build ${APP_VERSION}</p>
     </div>`;
 }
 
@@ -1346,7 +1348,24 @@ function renderSetup(msg) {
     </form>`;
 }
 
+/* New-version check: GitHub Pages and iOS can keep serving an old copy of this page.
+   version.json is fetched uncached; if it names a newer build, reload under a fresh URL. */
+async function checkVersion() {
+  if (IS_PREVIEW || !/^https?:/.test(location.protocol)) return;
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const v = (await r.json()).version;
+    let tried = ''; try { tried = sessionStorage.getItem('telemetry.reloadedFor') || ''; } catch (e) {}
+    if (v && v !== APP_VERSION && tried !== v) {
+      try { sessionStorage.setItem('telemetry.reloadedFor', v); } catch (e) {}
+      location.replace(location.pathname + '?v=' + encodeURIComponent(v));
+    }
+  } catch (e) {}
+}
+
 async function load() {
+  checkVersion();
   $('#previewBanner').hidden = !IS_PREVIEW;
   if (!IS_PREVIEW && !CONF.ready) { renderSetup(); return; }
   setSync('busy', 'Loading');
@@ -1375,7 +1394,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('#retryBtn')) load();
   if (e.target.closest('#sync') && !IS_PREVIEW && M) renderSetup();
 });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !IS_PREVIEW && CONF.ready && M) API.call('getData').then(d => { RAW = d; M = build(d); render(); setSync('', 'Synced'); }).catch(() => {}); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); if (document.visibilityState === 'visible' && !IS_PREVIEW && CONF.ready && M) API.call('getData').then(d => { RAW = d; M = build(d); render(); setSync('', 'Synced'); }).catch(() => {}); });
 load();
 </script>
 </body>
