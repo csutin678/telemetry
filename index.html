@@ -21,7 +21,7 @@
   --bg:#EEF0F6; --card:#FCFCFE; --ink:#131A33; --ink-2:#5A6178; --ink-3:#8A90A6; --line:#DCDFE9;
   --pill:#141B33; --pill-fg:#FFFFFF;
   --go:#2E6A4E; --go-soft:#DCEBE2; --warn:#D9646C; --warn-soft:#F6DFE1;
-  --easy:#2E6A4E; --quality:#D9646C; --long:#3D4C9B; --race:#B87A12; --cross:#8A90A6;
+  --easy:#2E7D57; --quality:#3E6ED6; --long:#C98A1B; --race:#D9646C; --cross:#2E8A8A; --strength:#8358C9; --rest:#6B7590;
   --f-display:"Outfit","Avenir Next","Segoe UI",system-ui,sans-serif;
   --f-body:"Figtree","Helvetica Neue","Segoe UI",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
@@ -62,7 +62,7 @@ nav.tabs button[aria-selected="true"] svg{stroke-width:2.3}
 .modes button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,27,51,.08)}
 .filters{padding:14px 16px;display:grid;gap:8px}
 .filters .f select,.filters .f input{padding:8px 10px}
-.linkbtn{justify-self:start;border:0;background:none;padding:2px 0;color:var(--long);font-weight:600;font-size:13.5px}
+.linkbtn{justify-self:start;border:0;background:none;padding:2px 0;color:var(--quality);font-weight:600;font-size:13.5px}
 .mixbar{display:flex;height:14px;border-radius:99px;overflow:hidden;margin:12px 0 6px;background:var(--line)}
 .mixbar button{display:block;height:100%;border:0;padding:0;border-right:2px solid var(--card)}
 .mixbar button:last-child{border-right:0}
@@ -83,6 +83,7 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .race .days b{display:block;font:800 30px/1 var(--f-display)}
 .race .days small{color:var(--ink-2)}
 .race{cursor:pointer;width:100%;text-align:left;font:inherit;color:inherit}
+.race.next{border:2px solid var(--race);box-shadow:inset 5px 0 0 var(--race)}
 .race:hover{border-color:var(--ink-3)}
 .race.done{opacity:.55}
 
@@ -107,21 +108,26 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .days{margin-top:14px;overflow:hidden}
 .day{display:grid;grid-template-columns:56px 1fr 52px;gap:12px;padding:18px 18px;border-top:1px solid var(--line)}
 .day:first-child{border-top:0}
-.day.is-done{background:color-mix(in srgb,var(--go-soft) 70%,transparent)}
-.day.is-today{box-shadow:inset 4px 0 0 var(--ink)}
+.day.is-today{background:linear-gradient(90deg,var(--go-soft) 0%,color-mix(in srgb,var(--go-soft) 55%,transparent) 45%,transparent 100%)}
+.day.sub{padding-top:2px;border-top:0}
+.day.sub h3{font-size:15.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.day.sub .tick{width:36px;height:36px;justify-self:center}
+.day.sub .tick svg{width:16px;height:16px}
 .day .dnum{font:800 28px/1 var(--f-display)}
 .day .dname{color:var(--ink-2);font-size:13px;font-weight:600;line-height:1.2;margin-top:4px}
 .day h3{margin:0;font:700 17px/1.25 var(--f-display)}
 .day.is-done h3{text-decoration:line-through;text-decoration-thickness:2px;color:var(--ink-3)}
-.day.is-done .desc{color:var(--ink-3)}
+.day.is-done .desc{color:var(--ink-3);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--ink-3) 60%,transparent)}
+.prow h3.struck,.pline.struck{text-decoration:line-through;color:var(--ink-3)}
 .day.is-rest h3{color:var(--ink-3)}
 .desc{margin:4px 0 0;color:var(--ink-2);font-size:14px}
 .chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
 .chip{font:600 12.5px var(--f-body);padding:4px 10px;border-radius:8px;background:var(--go-soft);color:var(--go)}
-.chip.k-quality{background:var(--warn-soft);color:var(--quality)}
+.chip.k-quality{background:color-mix(in srgb,var(--quality) 14%,transparent);color:var(--quality)}
 .chip.k-long{background:color-mix(in srgb,var(--long) 16%,transparent);color:var(--long)}
 .chip.k-race{background:color-mix(in srgb,var(--race) 18%,transparent);color:var(--race)}
-.chip.k-cross,.chip.k-strength{background:color-mix(in srgb,var(--cross) 18%,transparent);color:var(--ink-2)}
+.chip.k-cross{background:color-mix(in srgb,var(--cross) 14%,transparent);color:var(--cross)}
+.chip.k-strength{background:color-mix(in srgb,var(--strength) 14%,transparent);color:var(--strength)}
 .actual{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:13.5px}
 .actual input{width:68px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);text-align:right}
 .tick{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:transparent;display:grid;place-items:center;align-self:start}
@@ -135,6 +141,7 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .panel{padding:0;overflow:hidden}
 .prow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:11px 16px;border:0;border-top:1px solid var(--line);background:transparent;width:100%;text-align:left;font:inherit;color:inherit}
 .prow:first-child{border-top:0}
+.prow.glow{background:linear-gradient(90deg,var(--go-soft) 0%,color-mix(in srgb,var(--go-soft) 50%,transparent) 50%,transparent 100%)}
 .prow h3{margin:1px 0 0;font:700 18px/1.2 var(--f-display)}
 .prow h3.struck{text-decoration:line-through;color:var(--ink-3)}
 .prow .mono{font-size:10.5px}
@@ -175,6 +182,31 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
 
 /* calendar */
+.cal-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin:4px 0 14px;color:var(--ink-2);font-size:14px}
+.cal-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tiles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.tiles.dow span{text-align:center;color:var(--ink-2);font-size:13px;font-weight:600;padding-bottom:4px}
+.cal-week{margin-top:16px}
+.cal-week header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.cal-week h3{margin:0;font:700 17px var(--f-display);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cal-week header > span{color:var(--ink-2);font-size:14px;white-space:nowrap}
+.nowchip{font:600 12px var(--f-body);background:var(--go-soft);color:var(--go);padding:3px 8px;border-radius:7px}
+.tile{position:relative;border:0;border-top:4px solid var(--k);background:color-mix(in srgb,var(--k) 11%,var(--card));border-radius:10px;padding:6px 2px 8px;display:grid;justify-items:center;align-content:start;gap:0;min-width:0;font:inherit;color:var(--ink);cursor:pointer;min-height:76px}
+.tile .dn{font:600 12px var(--f-display);color:var(--ink-2)}
+.tile .km{font:800 21px/1.15 var(--f-display);min-height:24px}
+.tile .lb{font-size:10.5px;color:var(--ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.tile.done{opacity:.55}
+.tile.today{opacity:1;box-shadow:0 0 0 2px var(--ink)}
+.tile.is-rest{background:color-mix(in srgb,var(--rest) 8%,var(--card))}
+.tile:hover{filter:brightness(.97)}
+.gymdot{position:absolute;top:6px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--strength)}
+.carbs{padding:16px 18px;margin-bottom:12px}
+.carb-big{font:800 34px/1.1 var(--f-display);letter-spacing:-.02em;margin-top:4px}
+.carb-big small{font:500 15px var(--f-body);color:var(--ink-2)}
+ul.load{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--line)}
+ul.load li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+ul.load li span:last-child{color:var(--ink-2)}
+svg.spark{display:block;width:100%;height:auto;margin:4px 0}
 .cal-head{display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px}
 .cal-head h2{margin:0;font:800 26px var(--f-display)}
 .iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);font:600 18px var(--f-display)}
@@ -192,7 +224,7 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .cal-key{display:flex;flex-wrap:wrap;gap:12px;margin:10px 4px 2px;color:var(--ink-2);font-size:12.5px}
 
 /* nutrition */
-.form{padding:16px 18px;display:grid;gap:10px}
+.form{padding:16px 18px;display:grid;gap:10px;margin-bottom:12px}
 .form .two{display:grid;grid-template-columns:1fr 110px;gap:10px}
 label.f{display:grid;gap:4px;font-size:13px;color:var(--ink-2);min-width:0}
 .f input,.f select,.f textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
@@ -299,7 +331,8 @@ const Mock = (() => {
     saveSession(p) {
       if (p.logRow) { const r = raw.log.find(x => x[0] === p.logRow); if (r) put(r, p, true); }
       let r = [...raw.s1, ...raw.s2].find(x => x[2] === p.date && (x[3] === p.activity || x[3] === p.prevActivity) && filled(x))
-        || raw.s1.find(x => x[2] === p.date && !filled(x));
+        || (p.preferS2 ? null : raw.s1.find(x => x[2] === p.date && !filled(x)));
+      if (!r && p.preferS2) { r = [9500 + raw.s2.length, '', p.date, '', '', '', '', '', '', '', '', '', '', '', 'FALSE', '', '', '']; raw.s2.push(r); }
       if (!r) { r = [9000 + raw.s2.length, '', p.date, '', '', '', '', '', '', '', '', '', '', '', 'FALSE', '', '', '']; (raw.s1.some(x => x[2] === p.date) ? raw.s2 : raw.s1).push(r); }
       put(r, p, false);
       return { ok: true, data: this.getData() };
@@ -312,6 +345,7 @@ const Mock = (() => {
       return { ok: true, data: this.getData() };
     },
     addMeal(m) { raw.nutrition = raw.nutrition || []; raw.nutrition.push([raw.nutrition.length + 2, Math.random().toString(36).slice(2, 10), m.date, m.meal, m.item, String(m.kcal), m.notes || '']); return { ok: true, data: this.getData() }; },
+    addWeight(w) { raw.weights = (raw.weights || []).filter(r => r[1] !== w.date); raw.weights.push([0, w.date, String(w.kg)]); raw.weights.sort((a, b) => a[1].localeCompare(b[1])); return { ok: true, data: this.getData() }; },
     syncGarmin() { return { added: [], sleepFilled: 0, errors: ['Preview: Garmin sync runs on the live app only.'], data: this.getData() }; },
     deleteMeal(id) { raw.nutrition = (raw.nutrition || []).filter(r => r[1] !== id); return { ok: true, data: this.getData() }; }
   };
@@ -419,8 +453,10 @@ function build(raw) {
   plan.forEach(p => { p.kind = kindOf(p.activity, p.type); p.run = isRun(p.activity, p.type); p.done = done(p); p.title = prettyTitle(p.activity, p.type); });
 
   // Weekly planned km from the Schedule tab (columns I, J, K), as the sheet's own dashboard does
-  const schedKm = {};
-  (raw.sched || []).forEach(r => { if (/^\d+$/.test(String(r[1]).trim()) && r.length > 9) schedKm[+r[1]] = num(r[9]) + num(r[10]) + num(r[11]); });
+  const schedKm = {}, schedPart = {};
+  (raw.sched || []).forEach(r => { if (/^\d+$/.test(String(r[1]).trim()) && r.length > 9) { schedKm[+r[1]] = num(r[9]) + num(r[10]) + num(r[11]); schedPart[+r[1]] = { easy: num(r[9]), quality: num(r[10]) }; } });
+  // Easy and quality days carry their km on the Schedule tab (columns I, J), not in the log
+  plan.forEach(p => { if (p.run && !p.planned && schedPart[p.week]) { const v = schedPart[p.week][p.kind]; if (v) p.planned = v; } });
 
   // Weeks
   const byWeek = new Map();
@@ -463,7 +499,8 @@ function build(raw) {
   // Nutrition
   const meals = (raw.nutrition || []).filter(r => r[1] && r[2]).map(r => ({ id: r[1], date: /^\d{4}-/.test(r[2]) ? r[2] : parseLoose(r[2]), meal: r[3], item: r[4], kcal: num(r[5]), notes: r[6] }));
 
-  return { plan, weeks, current, block, history, runs, races, raceDate, types, shoes, meals, done };
+  const weights = (raw.weights || []).filter(r => r[1] && num(r[2])).map(r => ({ date: /^\d{4}-/.test(r[1]) ? r[1] : parseLoose(r[1]), kg: num(r[2]) })).filter(w => w.date).sort((a, b) => a.date.localeCompare(b.date));
+  return { plan, weeks, current, block, history, runs, races, raceDate, types, shoes, meals, weights, done };
 }
 
 /* ================= rendering ================= */
@@ -490,7 +527,7 @@ function raceCard(r, next) {
   const left = r.date ? daysBetween(TODAY, r.date) : null;
   const dist = r.dist ? (r.dist >= 42 ? '42K' : r.dist >= 21 ? '21K' : `${Math.round(r.dist)}K`) : '—';
   const meta = [r.date ? fmtDay(r.date) : 'Date to confirm', r.goal ? 'Goal race' : r.status].filter(Boolean).join(', ');
-  const cls = left !== null && left < 0 ? 'done' : '';
+  const cls = left !== null && left < 0 ? 'done' : next ? 'next' : '';
   return `<button class="card race ${cls}" data-race="${M.races.indexOf(r)}" aria-label="Details for ${esc(r.name)}">
     <div class="dist">${dist}</div>
     <div style="min-width:0"><div class="name">${esc(r.name)}</div><div class="meta">${esc(meta)}</div></div>
@@ -571,20 +608,9 @@ function renderSummary() {
     <p class="hello">${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</p>
     <div class="subrow"><p class="sub" style="margin:0">Week ${w.n} of ${M.weeks.length}</p><button class="linkbtn" id="garminBtn">↻ Sync Garmin</button></div>
     <div class="stack">
-      <div class="card panel">
-        ${today.map(t => `<div class="prow">
-          <div style="min-width:0"><div class="mono">Today${t.done ? ' · done' : ''}</div><h3 class="${t.done ? 'struck' : ''}">${esc(t.title)}</h3>
-          <div class="desc one">${esc(t.planned ? `${KIND_LABEL[t.kind]}, ${km1(t.planned)} km planned` : (t.kind === 'rest' ? 'Recovery day' : KIND_LABEL[t.kind]))}</div></div>
-          ${t.kind === 'rest' ? '' : `<button class="btn sm ${t.done ? 'ghost' : ''}" data-log="${t.row}">${t.done ? 'Edit' : 'Log it'}</button>`}
-        </div>`).join('') || '<div class="prow"><div><div class="mono">Today</div><h3>Nothing planned</h3></div></div>'}
-        ${nextRun ? `<div class="prow"><div style="min-width:0"><div class="mono">Next run</div><div class="pline">${esc(nextRun.title)}</div></div><span class="pside">${esc(fmtDay(nextRun.date))}</span></div>` : ''}
-        <div class="prow" style="display:block">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><div class="mono">This week</div><span class="pside">${w.ticked}/${w.sessions} sessions</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:2px"><div class="pline num">${km1(w.actual)} <small>/ ${km1(w.planned)} km</small></div><span class="pside num ${weekLeft > 0 ? 'warn-t' : 'go-t'}">${weekLeft > 0 ? `${km1(weekLeft)} km to go` : 'Target met'}</span></div>
-          <div class="bar thin"><i style="width:${pct}%"></i></div>
-        </div>
-        ${goal ? `<button class="prow race-row" data-race="${M.races.indexOf(goal)}"><div style="min-width:0"><div class="mono">Goal race</div><div class="pline">${esc(goal.name)}</div><div class="desc one">${goal.date ? esc(fmtDay(goal.date)) : ''}${goal.dist ? ` · ${km1(goal.dist)} km` : ''}</div></div><div class="cd"><b class="num">${goal.date ? daysBetween(TODAY, goal.date) : '–'}</b><small>days</small></div></button>` : ''}
-      </div>
+      <h2 class="sec" style="margin:8px 0 0">Upcoming races</h2>
+      <p class="sub" style="margin:0">Tap a race for details.</p>
+      ${(() => { const up = races.filter(r => !r.date || r.date >= TODAY); const ni = up.findIndex(r => r.date); return up.map((r, i) => raceCard(r, i === ni)).join('') || '<div class="card empty">No upcoming races in the Races tab.</div>'; })()}
 
       <h2 class="sec" style="margin-bottom:0">Dashboard</h2>
       ${filterBar()}
@@ -703,13 +729,35 @@ function longRunChart() {
 
 /* ---------- Training ---------- */
 const TRAIN_MODES = [['week', 'Week by week'], ['run', 'Run'], ['badminton', 'Badminton'], ['tennis', 'Tennis'], ['soccer', 'Soccer']];
+function todayPanel() {
+  const w = M.current, plan = M.plan;
+  const today = plan.filter(p => p.date === TODAY);
+  const nextRun = plan.find(p => p.date > TODAY && p.run && !p.done);
+  const weekLeft = Math.max(0, w.planned - w.actual);
+  const pct = w.planned ? Math.min(100, w.actual / w.planned * 100) : 0;
+  const gym = strengthWeek(TODAY).length;
+  return `<div class="card panel">
+    ${today.filter(t => t.kind !== 'rest' || today.length === 1).map(t => `<div class="prow ${t.date === TODAY && !t.done && t.kind !== 'rest' ? 'glow' : ''}">
+      <div style="min-width:0"><div class="mono">Today${t.done ? ' · done' : ''}</div><h3 class="${t.done ? 'struck' : ''}">${esc(t.title)}</h3>
+      <div class="desc one ${t.done ? 'struck' : ''}">${esc(t.planned ? `${KIND_LABEL[t.kind]}, ${km1(t.planned)} km planned` : (t.kind === 'rest' ? 'Recovery day' : KIND_LABEL[t.kind]))}</div></div>
+      ${t.kind === 'rest' ? '' : `<button class="btn sm ${t.done ? 'ghost' : ''}" data-log="${t.row}">${t.done ? 'Edit' : 'Log it'}</button>`}
+    </div>`).join('') || '<div class="prow"><div><div class="mono">Today</div><h3>Nothing planned</h3></div></div>'}
+    ${nextRun ? `<div class="prow"><div style="min-width:0"><div class="mono">Next run</div><div class="pline">${esc(nextRun.title)}</div></div><span class="pside">${esc(fmtDay(nextRun.date))}</span></div>` : ''}
+    <div class="prow" style="display:block">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><div class="mono">This week</div><span class="pside">${w.ticked}/${w.sessions} sessions · gym ${gym}/${STRENGTH_TARGET}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:2px"><div class="pline num">${km1(w.actual)} <small>/ ${km1(w.planned)} km</small></div><span class="pside num ${weekLeft > 0 ? 'warn-t' : 'go-t'}">${weekLeft > 0 ? `${km1(weekLeft)} km to go` : 'Target met'}</span></div>
+      <div class="bar thin"><i style="width:${pct}%"></i></div>
+    </div>
+  </div>`;
+}
+
 function renderTraining() {
   const mode = state.trainMode || 'week';
   const upcoming = M.races.filter(r => !r.date || r.date >= TODAY);
   const nextIdx = upcoming.findIndex(r => r.date);
   view.innerHTML = `
-    <h2 class="sec">Races</h2>
-    <div class="card panel">${upcoming.map(raceRow).join('') || '<div class="empty">No upcoming races in the Races tab.</div>'}</div>
+    <h2 class="sec">Today</h2>
+    ${todayPanel()}
     <div class="modes" role="tablist" aria-label="Training view">${TRAIN_MODES.map(([k, l]) => `<button role="tab" data-mode="${k}" aria-selected="${k === mode}">${l}</button>`).join('')}</div>
     ${mode === 'week' ? weekView() : workoutView(mode)}`;
   const cur = $('#pills [aria-pressed="true"]'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
@@ -733,7 +781,7 @@ function weekView() {
       <div class="bar"><i style="width:${pct}%"></i></div>
       <p class="wk-note">Week ${w.n}: planned ${km1(w.planned)} km, ${w.ticked} of ${w.sessions} sessions ticked.<br>Whole block: ${km1(block.actual)} of ${km1(block.planned)} km, ${km1(Math.max(0, block.planned - block.actual))} km left to collect.</p>
     </div>
-    <div class="card days">${w.rows.map(dayRow).join('')}</div>`;
+    <div class="card days">${w.rows.map((r, i) => dayRow(r) + (w.rows[i + 1] && w.rows[i + 1].date === r.date ? '' : strengthSlot(r.date))).join('')}</div>`;
 }
 
 function workoutView(mode) {
@@ -804,39 +852,192 @@ function dayRow(p) {
   </div>`;
 }
 
-function renderCalendar() {
-  const m = state.calMonth || TODAY.slice(0, 7);
-  state.calMonth = m;
-  const [y, mo] = m.split('-').map(Number);
-  const first = iso(new Date(y, mo - 1, 1));
-  const start = monday(first);
-  const byDate = {};
-  const add = (date, item) => { (byDate[date] = byDate[date] || []).push(item); };
-  const planDates = new Set(M.plan.map(p => p.date));
-  M.plan.forEach(p => { if (p.kind !== 'rest') add(p.date, { kind: p.kind, label: p.done && p.km ? km1(p.km) : p.planned ? km1(p.planned) : (p.run ? KIND_LABEL[p.kind] : p.activity.slice(0, 4)), done: p.done }); });
-  M.history.forEach(h => { if (!planDates.has(h.date)) add(h.date, { kind: h.kind, label: h.km ? km1(h.km) : h.activity.slice(0, 4), done: true }); });
-  let cells = '';
-  for (let i = 0; i < 42; i++) {
-    const ds = addDays(start, i), dd = D(ds);
-    if (i >= 35 && dd.getMonth() !== mo - 1) break;
-    const items = (byDate[ds] || []).slice(0, 2);
-    cells += `<button class="cell ${dd.getMonth() !== mo - 1 ? 'out' : ''} ${ds === TODAY ? 'today' : ''} ${ds === state.calSel ? 'sel' : ''}" data-day="${ds}" aria-label="${fmtDay(ds)}">
-      <span class="n">${dd.getDate()}</span>
-      ${items.map(it => `<span class="seg ${it.done ? '' : 'plan'}" style="${it.done ? `background:var(--${segColor(it.kind)})` : `color:var(--${segColor(it.kind)})`}">${esc(it.label)}</span>`).join('')}
-    </button>`;
-  }
-  const selPlan = M.plan.filter(p => p.date === state.calSel);
-  const selHist = M.history.filter(h => h.date === state.calSel && !planDates.has(h.date));
-  view.innerHTML = `
-    <div class="cal-head"><button class="iconbtn" data-cal="-1" aria-label="Previous month">‹</button><h2>${MON[mo - 1]} ${y}</h2><button class="iconbtn" data-cal="1" aria-label="Next month">›</button></div>
-    <div class="card cal">
-      <div class="cal-grid">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-dow mono">${d.slice(0, 2)}</div>`).join('')}${cells}</div>
-      <div class="cal-key">${['easy','quality','long','race','cross'].map(k => `<span><span class="dot" style="background:var(--${k})"></span> ${KIND_LABEL[k]}</span>`).join('')}<span>Dashed = planned</span></div>
-    </div>
-    <h2 class="sec" style="font-size:22px">${esc(fmtDay(state.calSel))}</h2>
-    <div class="card days">${selPlan.map(dayRow).join('') + selHist.map(h => `<div class="day is-done"><div><div class="dnum">${D(h.date).getDate()}</div><div class="dname">${DOW[D(h.date).getDay()]}</div></div><div style="min-width:0"><h3>${esc(h.type || prettyTitle(h.activity))}</h3><p class="desc">${h.km ? `${km1(h.km)} km · ` : ''}${esc(h.time)}${h.paceSec ? ` · ${paceStr(h.paceSec)}/km` : ''}${h.hr ? ` · ${Math.round(h.hr)} bpm` : ''}</p>${h.notes ? `<p class="desc">${esc(h.notes)}</p>` : ''}</div><div></div></div>`).join('') || `<div class="empty">Nothing planned or logged.<br><br><button class="btn" data-logdate="${state.calSel}">Log a session</button></div>`}</div>`;
+/* ---------- Calendar: every week at a glance ---------- */
+const KIND_SHORT = { easy: 'Easy', quality: 'Quality', long: 'Long', race: 'Race', strength: 'Gym', rest: 'Rest', cross: 'Sport' };
+const kindVar = k => ({ easy: 'easy', quality: 'quality', long: 'long', race: 'race', strength: 'strength', rest: 'rest' })[k] || 'cross';
+const segColor = kindVar;
+
+function dayInfo(ds) {
+  const plan = M.plan.filter(p => p.date === ds);
+  const hist = M.history.filter(h => h.date === ds);
+  const active = plan.filter(p => p.kind !== 'rest');
+  const main = active.find(p => p.run) || active[0] || hist.find(h => h.kind !== 'strength') || null;
+  const runKm = hist.filter(h => h.run).reduce((s, h) => s + h.km, 0);
+  const gym = hist.some(h => h.kind === 'strength');
+  const done = active.length ? active.every(p => p.done) || hist.some(h => h.kind !== 'strength') : hist.length > 0;
+  let kind = main ? main.kind : (gym ? 'strength' : 'rest');
+  let label = !main ? (gym ? 'Gym' : 'Rest') : main.kind === 'cross' ? main.activity.split(':')[0] : KIND_SHORT[main.kind];
+  const km = runKm || (main && main.run ? main.planned || main.km : 0);
+  return { plan, hist, main, kind, label, km, gym, done, rest: !main && !gym };
 }
-const segColor = k => ({ easy:'easy', quality:'quality', long:'long', race:'race' })[k] || 'cross';
+
+function renderCalendar() {
+  const weeks = M.weeks.map(w => ({ ...w, label: `Week ${w.n}, ${fmtShort(w.start)}`, cur: w === M.current, inPlan: true }));
+  if (state.calEarlier && M.history.length) {
+    const first = monday(M.history[0].date), stop = M.weeks[0].start;
+    const early = [];
+    for (let wk = first; wk < stop; wk = addDays(wk, 7)) {
+      const actual = M.runs.filter(r => r.date >= wk && r.date <= addDays(wk, 6)).reduce((s, r) => s + r.km, 0);
+      if (M.history.some(h => h.date >= wk && h.date <= addDays(wk, 6))) early.push({ start: wk, actual, label: `Week of ${fmtShort(wk)}`, inPlan: false });
+    }
+    weeks.unshift(...early);
+  }
+  const legend = [['easy', 'Easy'], ['quality', 'Quality'], ['long', 'Long'], ['strength', 'Strength'], ['cross', 'Sport'], ['rest', 'Rest / recovery'], ['race', 'Race']];
+  view.innerHTML = `
+    <h2 class="sec">Training calendar</h2>
+    <p class="sub">Every week at a glance, in km. Tap a day to see its details.</p>
+    <div class="cal-legend">${legend.map(([k, l]) => `<span><i style="background:var(--${k})"></i>${l}</span>`).join('')}</div>
+    <div class="tiles dow">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => `<span>${d}</span>`).join('')}</div>
+    ${M.history.length && M.weeks.length && M.history[0].date < M.weeks[0].start ? `<button class="linkbtn" id="calEarlier" style="margin:4px 0 2px">${state.calEarlier ? 'Hide earlier weeks' : 'Show earlier weeks'}</button>` : ''}
+    ${weeks.map(w => {
+      const past = addDays(w.start, 6) < TODAY;
+      const right = !w.inPlan ? `${km1(w.actual)} km` : (past || w.cur) ? `${km1(w.actual)} of ${km1(w.planned)} km` : `${km1(w.planned)} km`;
+      let tiles = '';
+      for (let i = 0; i < 7; i++) {
+        const ds = addDays(w.start, i), info = dayInfo(ds);
+        const k = info.rest ? 'rest' : kindVar(info.kind);
+        tiles += `<button class="tile ${info.done ? 'done' : ''} ${ds === TODAY ? 'today' : ''} ${info.rest ? 'is-rest' : ''}" style="--k:var(--${k})" data-day="${ds}" aria-label="${esc(fmtDay(ds))}: ${esc(info.label)}${info.km ? ', ' + km1(info.km) + ' km' : ''}${info.done ? ', done' : ''}">
+          <span class="dn">${D(ds).getDate()}${info.done ? ' ✓' : ''}</span>
+          <span class="km num">${info.km ? km1(info.km).replace(/\.\d$/, m => info.km >= 10 ? '' : m) : ''}</span>
+          <span class="lb">${esc(info.label)}</span>
+          ${info.gym && info.kind !== 'strength' ? '<i class="gymdot" title="Strength logged"></i>' : ''}
+        </button>`;
+      }
+      return `<section class="cal-week${w.cur ? ' is-cur' : ''}">
+        <header><h3>${esc(w.label)}${w.cur ? ' <span class="nowchip">This week</span>' : ''}</h3><span class="num">${right}</span></header>
+        <div class="tiles">${tiles}</div></section>`;
+    }).join('')}`;
+  const cur = $('.cal-week.is-cur');
+  if (cur && !state.calScrolled) { state.calScrolled = true; requestAnimationFrame(() => setTimeout(() => { const y = cur.getBoundingClientRect().top + window.scrollY - 120; window.scrollTo({ top: Math.max(0, y) }); }, 30)); }
+}
+
+function openDay(ds) {
+  const info = dayInfo(ds);
+  const planIds = new Set();
+  const planHtml = info.plan.map(p => { return dayRow(p); }).join('');
+  const extraHist = info.hist.filter(h => !info.plan.some(p => p.done && p.activity === h.activity) && !(h.kind !== 'strength' && info.plan.some(p => p.done && p.kind === h.kind)));
+  sheetCtx = { day: ds };
+  $('#sheetRoot').innerHTML = `<div class="scrim" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet-in">
+    <div class="mono">${ds === TODAY ? 'Today' : esc(DOW[D(ds).getDay()])}</div>
+    <h3 id="sheetTitle">${esc(fmtDay(ds))}</h3>
+    ${planHtml ? `<div class="card days" style="margin:0">${planHtml}${strengthSlot(ds, true)}</div>` : ''}
+    ${extraHist.length ? `<div class="mono" style="margin-top:4px">Logged</div><div class="card list" style="margin:0">${extraHist.map(h => h.run ? runRow(h) : otherRow(h)).join('')}</div>` : ''}
+    ${!planHtml && !extraHist.length ? '<p class="desc">Nothing planned or logged.</p>' : ''}
+    <div class="actions">
+      <button type="button" class="btn ghost" data-close>Close</button>
+      <button type="button" class="btn" data-logdate="${ds}">Log a session</button>
+    </div>
+  </div></div>`;
+}
+
+function otherRow(h) {
+  return `<div class="row tap" role="button" tabindex="0" data-hist="${h.idx}">
+    <div><div style="font:800 18px var(--f-display)">${D(h.date).getDate()}</div><div class="r-sub">${MON[D(h.date).getMonth()]}</div></div>
+    <div style="min-width:0"><div style="font-weight:600"><span class="dot" style="background:var(--${kindVar(h.kind)})"></span> ${esc(h.activity)}</div><div class="r-sub one">${esc(String(h.notes || '').slice(0, 80))}</div></div>
+    <div class="r-km num">${esc(h.time || '✓')}</div></div>`;
+}
+
+/* ---------- Strength: twice a week as Session 2 on Mon / Thu / Fri ---------- */
+const STRENGTH_DAYS = [1, 4, 5];       // Mon, Thu, Fri
+const STRENGTH_TARGET = 2;
+function strengthWeek(ds) {
+  const wk = monday(ds);
+  return M.history.filter(h => h.kind === 'strength' && h.date >= wk && h.date <= addDays(wk, 6));
+}
+/** Row shown under a Mon/Thu/Fri day: the logged strength session, or an optional slot while the week is short. */
+function strengthSlot(ds, inSheet) {
+  const dow = D(ds).getDay();
+  const logged = M.history.filter(h => h.date === ds && h.kind === 'strength');
+  if (logged.length) return logged.map(h => `<div class="day sub is-done">
+      <div></div>
+      <div style="min-width:0"><h3>${esc(h.activity)}</h3><p class="desc">Session 2${h.time ? ' · ' + esc(h.time) : ''}</p></div>
+      <div><button class="tick on" data-hist="${h.idx}" aria-label="Details for ${esc(h.activity)}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div></div>`).join('');
+  if (!STRENGTH_DAYS.includes(dow) || ds < TODAY) return '';
+  const n = strengthWeek(ds).length;
+  if (n >= STRENGTH_TARGET) return '';
+  return `<div class="day sub">
+      <div></div>
+      <div style="min-width:0"><h3>Strength <span class="chip k-strength">Session 2</span></h3><p class="desc">Optional. ${n} of ${STRENGTH_TARGET} done this week; any two of Mon, Thu, Fri.</p></div>
+      <div><button class="tick" data-strength="${ds}" aria-label="Log strength on ${esc(fmtDay(ds))}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div></div>`;
+}
+
+/* ---------- Body weight + daily carb target ----------
+ * Daily carbohydrate ranges follow common sports-nutrition guidance (g per kg body weight):
+ * light/rest 3–5, moderate (~1 h) 5–7, hard or 1–2.5 h 6–8, long run 2 h+ or race 8–10.
+ */
+function latestWeight() { return M.weights.length ? M.weights[M.weights.length - 1] : null; }
+
+function todayLoad(ds) {
+  const items = [];
+  const plan = M.plan.filter(p => p.date === ds && p.kind !== 'rest');
+  const hist = M.history.filter(h => h.date === ds);
+  const pace = longPace();
+  plan.forEach(p => {
+    const h = hist.find(x => x.activity === p.activity || (p.run && x.run));
+    if (p.run) {
+      const km = (h && h.km) || p.km || p.planned || (p.kind === 'quality' ? 10 : 8);
+      const min = (h && secs(h.time) / 60) || km * pace / 60 * (p.kind === 'quality' || p.kind === 'race' ? 0.92 : 1);
+      items.push({ label: `${p.title}, ${km1(km)} km`, min, hard: p.kind === 'quality' || p.kind === 'race', race: p.kind === 'race', long: p.kind === 'long' });
+    } else {
+      const min = (h && secs(h.time) / 60) || 75;
+      items.push({ label: p.activity, min, hard: true });
+    }
+  });
+  hist.filter(h => !plan.some(p => p.activity === h.activity || (p.run && h.run))).forEach(h => {
+    items.push({ label: h.kind === 'strength' ? h.activity : (h.type || h.activity), min: secs(h.time) / 60 || (h.kind === 'strength' ? 45 : 60), hard: h.kind === 'quality' || h.kind === 'cross' });
+  });
+  const minutes = items.reduce((s, i) => s + i.min, 0);
+  const score = minutes + (items.some(i => i.hard) ? 20 : 0);
+  let band;
+  if (items.some(i => i.race) || items.some(i => i.long && i.min >= 110) || score >= 150) band = { name: 'Long run or race day', lo: 8, hi: 10 };
+  else if (score >= 90) band = { name: 'Hard training day', lo: 6, hi: 8 };
+  else if (score >= 30) band = { name: 'Moderate training day', lo: 5, hi: 7 };
+  else band = { name: 'Rest or light day', lo: 3, hi: 5 };
+  return { items, minutes, band };
+}
+
+function weightSpark(ws) {
+  const pts = ws.slice(-20);
+  if (pts.length < 2) return '';
+  const W = 300, H = 56, P = 6, vals = pts.map(p => p.kg);
+  const lo = Math.min(...vals) - 0.3, hi = Math.max(...vals) + 0.3;
+  const x = i => P + (W - 2 * P) * i / (pts.length - 1), y = v => P + (H - 2 * P) * (1 - (v - lo) / (hi - lo));
+  const line = pts.map((p, i) => `${x(i)},${y(p.kg)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" class="spark" role="img" aria-label="Weight trend">
+    <polygon points="${x(0)},${H} ${line} ${x(pts.length - 1)},${H}" fill="var(--go-soft)"/>
+    <polyline points="${line}" fill="none" stroke="var(--go)" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${x(pts.length - 1)}" cy="${y(vals[vals.length - 1])}" r="3.5" fill="var(--go)"/></svg>`;
+}
+
+function nutritionTop() {
+  const w = latestWeight();
+  const L = todayLoad(TODAY);
+  const kg = w ? w.kg : null;
+  const r5 = v => Math.round(v / 5) * 5;
+  const prev = M.weights.length > 1 ? M.weights[M.weights.length - 2] : null;
+  const month = w ? M.weights.filter(x => x.date >= addDays(w.date, -30))[0] : null;
+  const delta = (a, b) => { const d = Math.round((a - b) * 10) / 10; return `${d > 0 ? '+' : ''}${d.toFixed(1)} kg`; };
+  return `
+    <div class="card carbs">
+      <div class="mono">Carb target today</div>
+      ${kg ? `<div class="carb-big num">${r5(L.band.lo * kg)}–${r5(L.band.hi * kg)} <small>g carbs</small></div>
+        <div class="desc">${esc(L.band.name)} · ${L.band.lo}–${L.band.hi} g per kg at ${kg} kg</div>`
+        : `<div class="pline" style="margin-top:4px">${L.band.lo}–${L.band.hi} g per kg · ${esc(L.band.name)}</div><div class="desc">Add your weight below to get grams.</div>`}
+      <ul class="load">${L.items.length ? L.items.map(i => `<li><span>${esc(i.label)}</span><span class="num">~${Math.round(i.min)} min</span></li>`).join('') : '<li><span>No training planned today</span><span></span></li>'}</ul>
+      <p class="desc" style="font-size:12.5px;margin:6px 0 0">Spread it over the day, with 1–1.5 g per kg in the meal 2–4 h before training. General guidance, not a prescription.</p>
+    </div>
+    <form class="card form" id="weightForm" autocomplete="off">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <div><div class="mono">Body weight</div><div class="pline num" style="font-size:24px">${w ? `${w.kg.toFixed(1)} <small>kg</small>` : '—'}</div></div>
+        <div class="pside" style="text-align:right">${w ? esc(fmtShort(w.date)) : 'No entries yet'}${prev ? `<br>${delta(w.kg, prev.kg)} vs last` : ''}${month && month !== w ? ` · ${delta(w.kg, month.kg)} 30 d` : ''}</div>
+      </div>
+      ${weightSpark(M.weights)}
+      <div class="two"><label class="f">Weight kg<input id="wKg" class="num" inputmode="decimal" placeholder="${w ? w.kg.toFixed(1) : 'e.g. 52.4'}" required></label>
+        <label class="f">Date<input id="wDate" type="date" value="${TODAY}"></label></div>
+      <button class="btn" type="submit">Save weight</button>
+    </form>`;
+}
 
 let mealDraft = { date: TODAY, meal: 'Breakfast' };
 function renderNutrition() {
@@ -846,6 +1047,7 @@ function renderNutrition() {
   view.innerHTML = `
     <h2 class="sec">Nutrition</h2>
     <p class="sub">Today so far: <b class="num">${Math.round(todayTotal).toLocaleString()} kcal</b></p>
+    ${nutritionTop()}
     ${(() => { const nl = M.plan.find(p => p.date >= TODAY && (p.kind === 'long' || p.kind === 'race') && !p.done && p.planned); if (!nl) return '';
       const f = fuelPlan(nl.planned, nl.kind === 'race');
       return `<div class="card panel" style="margin-bottom:12px"><button class="prow race-row" data-fuel="${nl.row}">
@@ -899,7 +1101,7 @@ function openLog(p) {
       <button type="button" class="btn ghost" data-close>Cancel</button>
       <button class="btn" type="submit">${p.done ? 'Save changes' : 'Mark done'}</button>
     </div>
-    <div class="mono" style="text-align:right">Writes to ${p.logRow ? 'Training Log + ' : ''}Session 1 / 2</div>
+    <div class="mono" style="text-align:right">Writes to ${p.logRow ? 'Training Log + ' : ''}${p.preferS2 ? 'Session 2' : 'Session 1 / 2'}</div>
   </form></div>`;
 }
 function factGrid(items) {
@@ -1063,6 +1265,8 @@ document.addEventListener('click', e => {
   if (t.dataset.fuel) { const p = M.plan.find(x => String(x.row) === t.dataset.fuel); if (p) openFuel(p); return; }
   if (t.id === 'logFuel') { const n = +t.dataset.gels; closeSheet(); run('addMeal', { date: t.dataset.date, meal: 'Run fuel', item: `${n} gels (${n * GEL_G} g carbs)`, kcal: n * GEL_G * 4 }, 'Run fuel logged'); return; }
   if (t.id === 'garminBtn') { syncGarminNow(); return; }
+  if (t.dataset.strength) { openLog({ date: t.dataset.strength, activity: 'Strength: Push', type: '', title: 'Strength', run: false, preferS2: true }); return; }
+  if (t.id === 'calEarlier') { state.calEarlier = !state.calEarlier; render(); return; }
   if (t.dataset.race) { const r = M.races[+t.dataset.race]; if (r) openRace(r); return; }
   if (t.id === 'editHist' && sheetCtx && sheetCtx.detail) { const h = sheetCtx.detail, p = M.plan.find(x => String(x.row) === t.dataset.plan); openLog({ ...h, ...(p ? { logRow: p.row, week: p.week, planned: p.planned } : {}), activity: h.activity, title: h.type || prettyTitle(h.activity), done: true }); return; }
   if (t.dataset.week) { state.week = +t.dataset.week; render(); return; }
@@ -1071,7 +1275,7 @@ document.addEventListener('click', e => {
   if (t.dataset.log) { const p = M.plan.find(x => String(x.row) === t.dataset.log); if (p) openLog({ ...p, logRow: p.row }); return; }
   if (t.dataset.logdate) { openLog({ date: t.dataset.logdate, activity: 'Run: Easy', type: 'Easy Run', title: 'Log a session' }); return; }
   if (t.dataset.cal) { const [y, m] = state.calMonth.split('-').map(Number); const d = new Date(y, m - 1 + Number(t.dataset.cal), 1); state.calMonth = iso(d).slice(0, 7); render(); return; }
-  if (t.dataset.day) { state.calSel = t.dataset.day; render(); return; }
+  if (t.dataset.day) { openDay(t.dataset.day); return; }
   if (t.dataset.meal) { mealDraft.meal = t.dataset.meal; document.querySelectorAll('[data-meal]').forEach(b => b.setAttribute('aria-pressed', String(b === t))); return; }
   if (t.dataset.delmeal) { run('deleteMeal', t.dataset.delmeal, 'Removed'); return; }
   if (t.dataset.rpe) { sheetCtx.rpeSel = sheetCtx.rpeSel === t.dataset.rpe ? '' : t.dataset.rpe; document.querySelectorAll('[data-rpe]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.rpe === sheetCtx.rpeSel))); return; }
@@ -1083,13 +1287,19 @@ document.addEventListener('submit', e => {
   e.preventDefault();
   if (e.target.id === 'logForm' && sheetCtx) {
     const v = id => $('#' + id).value.trim();
-    const p = { logRow: sheetCtx.logRow || null, date: sheetCtx.date, activity: v('fAct'), prevActivity: sheetCtx.activity, type: v('fType'),
+    const p = { logRow: sheetCtx.logRow || null, preferS2: !!sheetCtx.preferS2 || /^strength/i.test(v('fAct')), date: sheetCtx.date, activity: v('fAct'), prevActivity: sheetCtx.activity, type: v('fType'),
       km: v('fKm'), time: v('fTime'), hr: v('fHr'), rpe: sheetCtx.rpeSel, sleep: v('fSleep'), strides: v('fStrides'), shoes: v('fShoes'), notes: v('fNotes') };
     if (!p.km && !p.time) { toast('Add a distance or a time so the session counts as done.'); return; }
     if (p.time && !/^\d{1,2}:\d{2}(:\d{2})?$/.test(p.time)) { toast('Time needs h:mm:ss, for example 0:45:00.'); return; }
     if (p.time && p.time.split(':').length === 2) p.time = '0:' + p.time;
     closeSheet();
     run('saveSession', p, 'Saved to your sheet');
+  }
+  if (e.target.id === 'weightForm') {
+    const kg = num($('#wKg').value), date = $('#wDate').value || TODAY;
+    if (!(kg > 20 && kg < 300)) { toast('Enter your weight in kg, for example 52.4.'); return; }
+    run('addWeight', { date, kg }, `Saved ${kg.toFixed(1)} kg`);
+    return;
   }
   if (e.target.id === 'mealForm') {
     const item = $('#mItem').value.trim(), kcal = $('#mKcal').value.trim(), date = $('#mDate').value || TODAY;
