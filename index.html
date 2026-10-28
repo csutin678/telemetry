@@ -50,7 +50,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .sync.busy i{background:var(--race);animation:pulse 1s infinite}
 .sync.err i{background:var(--warn)}
 @keyframes pulse{50%{opacity:.3}}
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(5,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(6,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
   padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabs button{border:0;background:transparent;padding:6px 0;display:grid;justify-items:center;gap:3px;font:600 10.5px var(--f-display);color:var(--ink-3)}
 nav.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -402,10 +402,11 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
   <main id="view"><div class="empty">Loading your sheet…</div></main>
 </div>
 <nav class="tabs" role="tablist" aria-label="Sections">
-  <button role="tab" data-tab="summary" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Dashboard</span></button>
+  <button role="tab" data-tab="coach" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg><span>Summary</span></button>
+  <button role="tab" data-tab="summary" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Dashboard</span></button>
   <button role="tab" data-tab="training" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg><span>Training</span></button>
-  <button role="tab" data-tab="calendar" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
   <button role="tab" data-tab="activity" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg><span>Activity</span></button>
+  <button role="tab" data-tab="calendar" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
   <button role="tab" data-tab="nutrition" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0zM12 11V4M9 6.5c1-1.5 5-1.5 6 0"/></svg><span>Nutrition</span></button>
 </nav>
 <div id="sheetRoot"></div>
@@ -413,7 +414,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.28-15';
+const APP_VERSION = '2026.10.28-16';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -574,7 +575,7 @@ function prettyTitle(activity, type) {
 
 /* ================= model ================= */
 let RAW = null, M = null;
-const state = { tab: 'summary', week: null, calMonth: null, calSel: TODAY };
+const state = { tab: 'coach', week: null, calMonth: null, calSel: TODAY };
 try { const m = localStorage.getItem('telemetry.trainMode'); if (m) state.trainMode = m; } catch (e) {}
 
 // Garmin names runs after the district; show the park instead.
@@ -693,7 +694,7 @@ function render() {
   applyClock();
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === state.tab)));
   if (!M) return;
-  ({ summary: renderSummary, training: renderTraining, calendar: renderCalendar, activity: renderActivity, nutrition: renderNutrition })[state.tab]();
+  ({ coach: renderCoach, summary: renderSummary, training: renderTraining, calendar: renderCalendar, activity: renderActivity, nutrition: renderNutrition })[state.tab]();
 }
 
 function raceRow(r) {
@@ -880,7 +881,7 @@ async function loadAiSummary(force) {
   const st = await aiStage();
   if (!force && st.key === state.ai.key && (state.ai.data || state.ai.error)) return;
   state.ai = { ...state.ai, key: st.key, loading: true, error: '', stage: st.stage };
-  if (state.tab === 'summary') render();
+  if (state.tab === 'coach') render();
   try {
     const sheetSession = M.history.filter(h => h.date === TODAY).map(h => ({ activity: h.activity, km: h.km, time: h.time, hr: h.hr, rpe: h.rpe, notes: String(h.notes || '').slice(0, 300) }));
     const ctx = aiContext({ stage: st.stage, activity: st.act ? compactActivity(st.act) : null, loggedToday: sheetSession,
@@ -888,7 +889,7 @@ async function loadAiSummary(force) {
     state.ai.data = await API.call('aiSummary', { stage: st.stage, key: st.key, context: ctx, force: !!force });
   } catch (e) { state.ai.error = String(e && e.message || e); }
   state.ai.loading = false;
-  if (state.tab === 'summary') render();
+  if (state.tab === 'coach') render();
 }
 
 /* markdown-lite → safe HTML: paragraphs, "- " bullets, **bold** */
@@ -1006,9 +1007,6 @@ function renderSummary() {
     <p class="hello">${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</p>
     ${dayNote()}
     <div class="subrow"><p class="sub" style="margin:0">Week ${w.n} of ${M.weeks.length}</p><button class="linkbtn" id="garminBtn">↻ Sync Garmin</button></div>
-    ${aiCard()}
-    ${raceFold()}
-    ${weeklyFold()}
     <div class="stack">
       ${(() => { const up = races.filter(r => !r.date || r.date >= TODAY); const ni = up.findIndex(r => r.date); const nx = up[ni];
         return fold('races', 'Upcoming races', `<p class="sub" style="margin:0 0 2px">Tap a race for details.</p><div class="stack">${up.map((r, i) => raceCard(r, i === ni)).join('') || '<div class="card empty">No upcoming races in the Races tab.</div>'}</div>`,
@@ -1030,6 +1028,19 @@ function renderSummary() {
         fr.length ? `latest ${esc(fmtShort(fr[fr.length - 1].date))} · ${km1(fr[fr.length - 1].km)} km` : '')}
       <p class="mono" style="text-align:center;margin:8px 0 0">Telemetry build ${APP_VERSION}</p>
     </div>`;
+}
+
+/* Summary tab (landing page): the AI coach, weekly review and race-week briefing */
+function renderCoach() {
+  const d = D(TODAY);
+  view.innerHTML = `
+    <p class="hello">${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</p>
+    ${dayNote()}
+    <div class="subrow"><p class="sub" style="margin:0">Week ${M.current.n} of ${M.weeks.length}</p><button class="linkbtn" id="garminBtn">↻ Sync Garmin</button></div>
+    ${aiCard()}
+    ${raceFold()}
+    ${weeklyFold()}
+    <p class="mono" style="text-align:center;margin:8px 0 0">Telemetry build ${APP_VERSION}</p>`;
   setTimeout(() => { loadAiSummary(false); if (state.open.has('ai-week')) loadWeekly(); if (state.open.has('ai-race')) loadRace(); }, 0);
 }
 
