@@ -196,13 +196,40 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .tile .km{font:800 21px/1.15 var(--f-display);min-height:24px}
 .tile .lb{font-size:10.5px;color:var(--ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
 .tile.done{opacity:.55}
+.tile.missed{opacity:1;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--race) 9%,var(--card)) 0 6px,var(--card) 6px 12px);border-top-color:var(--race);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--race) 55%,transparent)}
+.tile.missed .km,.tile.missed .lb{text-decoration:line-through;text-decoration-color:var(--race);text-decoration-thickness:2px;color:var(--ink-3)}
+.tile.missed .dn{color:var(--race);font-weight:700}
+.tile.short{opacity:1;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--long) 70%,transparent)}
+.tile.short .dn{color:var(--long);font-weight:700}
+.tile .flag{position:absolute;left:50%;transform:translateX(-50%);bottom:-7px;font:700 9px/1 var(--f-mono);letter-spacing:.03em;text-transform:uppercase;padding:2px 5px;border-radius:5px;background:var(--race);color:#fff;white-space:nowrap}
+.tile.short .flag{background:var(--long)}
+.cal-status{margin-top:-6px}
+.cal-status .st{display:inline-flex;gap:5px;align-items:center}
+.cal-status .st b{font-weight:800}
+.cal-status .st-missed b{color:var(--race)}
+.cal-status .st-short b{color:var(--long)}
+.tiles{row-gap:12px}
 .tile.today{opacity:1;box-shadow:0 0 0 2px var(--ink)}
 .tile.is-rest{background:color-mix(in srgb,var(--rest) 8%,var(--card))}
 .tile:hover{filter:brightness(.97)}
 .gymdot{position:absolute;top:6px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--strength)}
 .carbs{padding:16px 18px;margin-bottom:12px}
-.kpis.fit{margin-top:8px}
-.evalcard{padding:16px 18px;display:grid;gap:10px;margin-top:12px}
+.kpis.fit{margin-top:0}
+details.fold{margin-top:14px;border-top:1px solid var(--line)}
+details.fold > summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 2px 10px;cursor:pointer;user-select:none}
+details.fold > summary::-webkit-details-marker{display:none}
+.fold-t{font:800 22px/1.15 var(--f-display);letter-spacing:-.015em}
+.fold-s{flex:1;min-width:0;text-align:right;color:var(--ink-2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+details.fold .chev{width:20px;height:20px;flex:none;fill:none;stroke:var(--ink-2);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+details.fold[open] .chev{transform:rotate(180deg)}
+details.fold > summary:focus-visible{outline:2px solid var(--quality);outline-offset:2px;border-radius:8px}
+.fold-b{padding:2px 0 6px}
+.fold-b > .card{margin:0}
+svg.loadweeks{display:block;width:100%;height:auto;margin-top:8px}
+.prdate{display:block;font:500 11px var(--f-body);color:var(--ink-3)}
+table.pred thead small{font-weight:500;text-transform:none;letter-spacing:0}
+.daynote{margin:2px 0 6px;font-size:13px;color:var(--ink-2);background:color-mix(in srgb,var(--long) 12%,transparent);padding:6px 10px;border-radius:8px;display:inline-block}
+.evalcard{padding:16px 18px;display:grid;gap:10px;margin-top:0}
 .kcal{padding:16px 18px;margin-bottom:12px}
 .kcal .bar{margin:10px 0 6px}
 .kcal ul.load{margin-top:10px}
@@ -374,7 +401,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.28-5';
+const APP_VERSION = '2026.10.28-9';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -422,12 +449,13 @@ const Mock = (() => {
       return { ok: true, data: this.getData() };
     },
     addMeal(m) { raw.nutrition = raw.nutrition || []; raw.nutrition.push([raw.nutrition.length + 2, Math.random().toString(36).slice(2, 10), m.date, m.meal, m.item, String(m.kcal), m.notes || '']); return { ok: true, data: this.getData() }; },
+    savePr(p) { raw.prs = (raw.prs || []).filter(r => r[1] !== p.dist); raw.prs.push([0, p.dist, p.time, p.date, p.source]); return { ok: true, data: this.getData() }; },
     saveProfile(p) { raw.profile = Object.entries(p).map(([k, v]) => [0, k, String(v)]); return { ok: true, data: this.getData() }; },
     saveNote(n) { raw.notes = (raw.notes || []).filter(r => r[1] !== n.key); raw.notes.push([0, n.key, n.date, n.name, n.legs || '', n.raceNotes || '']); return { ok: true, data: this.getData() }; },
     addWeight(w) { raw.weights = (raw.weights || []).filter(r => r[1] !== w.date); raw.weights.push([0, w.date, String(w.kg)]); raw.weights.sort((a, b) => a[1].localeCompare(b[1])); return { ok: true, data: this.getData() }; },
     activity(id) {
       const ex = window.TELEMETRY_EXAMPLE_ACTIVITY; if (!ex) return { error: 'Preview: activities come from Garmin on the live app.' };
-      const recent = [['example', 'Example run A', 0, 10.1], ['example-2', 'Example run B', -2, 8.0], ['example-3', 'Example run C', -4, 14.0]].map(([rid, n, off, km]) => ({ id: rid, name: n, date: addDays(TODAY, off) + ' 06:00', type: 'running', km }));
+      const recent = [['example', 'Example run A', 0, 7.7, 3073], ['example-2', 'Example run B', -2, 8.0, 2890], ['example-3', 'Example run C', -4, 14.0, 5520]].map(([rid, n, off, km, durS]) => ({ id: rid, name: n, date: addDays(TODAY, off) + ' 06:00', type: 'running', km, durS }));
       const pick = recent.find(r => r.id === id) || recent[0];
       return { ...JSON.parse(JSON.stringify(ex)), id: pick.id, name: pick.name + ' (preview only)', start: pick.date + ':00', recent };
     },
@@ -455,7 +483,30 @@ const secs = t => { if (!t) return 0; const p = String(t).split(':').map(Number)
 const hm = s => { s = Math.round(s || 0); return `${Math.floor(s / 3600)}:${pad(Math.floor(s % 3600 / 60))}`; };
 const paceStr = s => { if (!s || !isFinite(s)) return '—'; const m = Math.floor(s / 60), r = Math.round(s % 60); return r === 60 ? `${m+1}:00` : `${m}:${pad(r)}`; };
 const parseLoose = s => { const m = String(s).match(/([A-Za-z]{3})[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})/); if (!m) return /^\d{4}-\d\d-\d\d$/.test(s) ? s : null; const mi = MON.indexOf(m[1].slice(0,1).toUpperCase() + m[1].slice(1,3).toLowerCase()); return mi < 0 ? null : iso(new Date(+m[3], mi, +m[2])); };
-const TODAY = iso(new Date());
+/* ---------- Your day ----------
+ * Training dates stay on the Bangkok calendar date (your sheet's rule, and Garmin's).
+ * "Your day" — nutrition, calories, carbs, weigh-ins, the Today view — follows your wake cycle:
+ * it starts at DAY_START (default 12:00, while you're asleep) and runs to 11:59 the next morning.
+ * A Saturday-morning long run belongs to Friday's day (you go straight from Friday's night into it).
+ */
+let TZ = 'Asia/Bangkok', DAY_START = 12;
+try { TZ = localStorage.getItem('telemetry.tz') || TZ; const h = localStorage.getItem('telemetry.dayStart'); if (h !== null && h !== '') DAY_START = +h; } catch (e) {}
+function clockNow() {
+  try {
+    const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+      .formatToParts(new Date()).map(x => [x.type, x.value]));
+    return { date: `${p.year}-${p.month}-${p.day}`, hour: +p.hour, minute: +p.minute };
+  } catch (e) { const d = new Date(); return { date: iso(d), hour: d.getHours(), minute: d.getMinutes() }; }
+}
+function myDayNow() {
+  const c = clockNow();
+  const day = c.hour < DAY_START ? addDays(c.date, -1) : c.date;
+  return { day, cal: c.date, hour: c.hour, minute: c.minute, carried: day !== c.date };
+}
+let TODAY = myDayNow().day;
+/** Is this session done in the morning before your day starts, so it belongs to the previous day? */
+const isMorningSession = p => p.kind === 'long' && D(p.date).getDay() === 6;   // Saturday long run
+
 
 function kindOf(activity, type) {
   const s = `${activity} ${type}`;
@@ -592,15 +643,29 @@ function build(raw) {
   const fitness = (raw.fitness || []).map(r => ({ label: /^\d{4}-\d\d-\d\d$/.test(r[0]) ? MON[+r[0].slice(5, 7) - 1] + ' ' + r[0].slice(0, 4) : r[0], vo2: num(r[1]) || null, ltHr: r[2], ltPace: r[3] })).filter(f => f.label);
   const notes = (raw.notes || []).filter(r => r[1]).map(r => ({ key: String(r[1]), date: String(r[2] || '').slice(0, 10), name: r[3] || '', legs: r[4] || '', race: r[5] || '' }));
   const profile = { ...PROFILE_DEFAULTS };
-  (raw.profile || []).forEach(r => { const k = r[1], v = r[2]; if (k in profile && v !== '') profile[k] = k === 'sex' ? String(v).toUpperCase().slice(0, 1) : num(v); });
-  return { plan, weeks, current, block, history, runs, races, raceDate, types, shoes, meals, weights, garminDaily, fitness, notes, profile, done };
+  (raw.profile || []).forEach(r => { const k = r[1], v = r[2]; if (k in profile && v !== '') profile[k] = k === 'sex' ? String(v).toUpperCase().slice(0, 1) : k === 'timezone' ? String(v) : num(v); });
+  const prs = (raw.prs || []).filter(r => r[1]).map(r => ({ dist: r[1], sec: secs(r[2]), date: /^\d{4}-/.test(r[3]) ? r[3] : parseLoose(r[3]) || '', source: r[4] || '' }));
+  return { plan, weeks, current, block, history, runs, races, raceDate, types, shoes, meals, weights, garminDaily, fitness, notes, profile, prs, done };
 }
 
 /* ================= rendering ================= */
 const view = $('#view');
 function setSync(mode, text) { const s = $('#sync'); s.className = 'sync mono ' + (mode || ''); $('#syncText').textContent = text; }
 
+/** Use the profile's time zone and day start; remember them on this device so the first screen is right. */
+function applyClock() {
+  if (!M || !M.profile) return;
+  const tz = M.profile.timezone || 'Asia/Bangkok', ds = +M.profile.dayStartHour;
+  if (tz !== TZ || (isFinite(ds) && ds !== DAY_START)) {
+    TZ = tz; if (isFinite(ds)) DAY_START = ds;
+    try { localStorage.setItem('telemetry.tz', TZ); localStorage.setItem('telemetry.dayStart', String(DAY_START)); } catch (e) {}
+  }
+  const t = myDayNow().day;
+  if (t !== TODAY) { TODAY = t; mealDraft.date = TODAY; M = build(RAW); }
+}
+
 function render() {
+  applyClock();
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === state.tab)));
   if (!M) return;
   ({ summary: renderSummary, training: renderTraining, calendar: renderCalendar, activity: renderActivity, nutrition: renderNutrition })[state.tab]();
@@ -677,12 +742,33 @@ function filterBar() {
 }
 
 /* ---------- Summary ---------- */
+/* ---------- collapsible sections ----------
+   Closed by default; tap the title to open, tap again to close. Remembered on this device. */
+state.open = new Set();
+try { JSON.parse(localStorage.getItem('telemetry.open') || '[]').forEach(k => state.open.add(k)); } catch (e) {}
+function fold(id, title, body, sub) {
+  return `<details class="fold" data-fold="${id}"${state.open.has(id) ? ' open' : ''}>
+    <summary><span class="fold-t">${title}</span>${sub ? `<span class="fold-s">${sub}</span>` : ''}<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+    <div class="fold-b">${body}</div></details>`;
+}
+document.addEventListener('toggle', e => {
+  const d = e.target; if (!d.matches || !d.matches('details.fold')) return;
+  d.open ? state.open.add(d.dataset.fold) : state.open.delete(d.dataset.fold);
+  try { localStorage.setItem('telemetry.open', JSON.stringify([...state.open])); } catch (_) {}
+}, true);
+
+function dayNote() {
+  const n = myDayNow();
+  if (!n.carried) return '';
+  return `<p class="daynote">It's ${pad(n.hour)}:${pad(n.minute)} on ${esc(fmtDay(n.cal))}. Still your ${esc(DOW[D(n.day).getDay()])} until ${pad(DAY_START)}:00.</p>`;
+}
+
 function renderSummary() {
   const { current: w, races, plan } = M;
   const today = plan.filter(p => p.date === TODAY);
   const nextRun = plan.find(p => p.date > TODAY && p.run && !p.done);
   const goal = races.find(r => r.goal) || races.find(r => r.date && r.date >= TODAY);
-  const d = new Date();
+  const d = D(TODAY);
   const weekLeft = Math.max(0, w.planned - w.actual);
   const pct = w.planned ? Math.min(100, w.actual / w.planned * 100) : 0;
 
@@ -699,16 +785,14 @@ function renderSummary() {
 
   view.innerHTML = `
     <p class="hello">${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</p>
+    ${dayNote()}
     <div class="subrow"><p class="sub" style="margin:0">Week ${w.n} of ${M.weeks.length}</p><button class="linkbtn" id="garminBtn">↻ Sync Garmin</button></div>
     <div class="stack">
-      <h2 class="sec" style="margin:8px 0 0">Upcoming races</h2>
-      <p class="sub" style="margin:0">Tap a race for details.</p>
-      ${(() => { const up = races.filter(r => !r.date || r.date >= TODAY); const ni = up.findIndex(r => r.date); return up.map((r, i) => raceCard(r, i === ni)).join('') || '<div class="card empty">No upcoming races in the Races tab.</div>'; })()}
-
-      ${fitnessSection()}
-
-      <h2 class="sec" style="margin-bottom:0">Trends</h2>
-      ${filterBar()}
+      ${(() => { const up = races.filter(r => !r.date || r.date >= TODAY); const ni = up.findIndex(r => r.date); const nx = up[ni];
+        return fold('races', 'Upcoming races', `<p class="sub" style="margin:0 0 2px">Tap a race for details.</p><div class="stack">${up.map((r, i) => raceCard(r, i === ni)).join('') || '<div class="card empty">No upcoming races in the Races tab.</div>'}</div>`,
+          nx ? `${esc(nx.name)} · ${daysBetween(TODAY, nx.date)} d` : ''); })()}
+      ${fold('fitness', 'Fitness', fitnessSection(), fitnessSub())}
+      ${fold('trends', 'Trends', `<div class="stack">${filterBar()}
       <div class="kpis">
         <div class="card kpi"><span class="mono">Total run km</span><b class="num">${km1(total)}</b><small>${fr.length} runs logged</small></div>
         <div class="card kpi"><span class="mono">Longest run</span><b class="num">${longest.km ? km1(longest.km) + ' km' : '—'}</b><small>${longest.date ? esc(fmtShort(longest.date)) : 'No runs in range'}</small></div>
@@ -718,9 +802,10 @@ function renderSummary() {
       <p class="sub" style="margin:0">${peak ? `Peak week: ${esc(fmtShort(peak[0]))} · ${km1(peak[1])} km | ` : ''}${esc(filterLabel())}</p>
       <div class="card chart"><h3>Weekly running distance</h3><div class="legend"><span><i style="background:var(--go)"></i>Run km</span>${state.filter.view === 'program' ? '<span><i style="border:1.5px solid var(--ink-3)"></i>Planned</span>' : ''}</div>${volumeChart(fr)}</div>
       <div class="card chart"><h3>Pace and heart rate</h3><div class="legend"><span><i style="background:var(--quality)"></i>Pace, min/km (higher on chart = faster)</span><span><i style="background:var(--race)"></i>Avg HR, bpm</span></div>${paceHrChart(fr)}</div>
-      <div class="card chart"><h3>Long-run progression</h3><div class="legend"><span><i style="background:var(--long)"></i>Longest run each week, km</span></div>${longRunChart()}</div>
-      <div><h2 class="sec" style="margin-top:12px">Runs in view</h2></div>
-      <div class="card list">${fr.slice(-8).reverse().map(runRow).join('') || '<div class="empty">No runs match these filters.</div>'}</div>
+      <div class="card chart"><h3>Long-run progression</h3><div class="legend"><span><i style="background:var(--long)"></i>Longest run each week, km</span></div>${longRunChart()}</div></div>`,
+        `${km1(total)} km · ${esc(filterLabel())}`)}
+      ${fold('recent', 'Recent runs', `<div class="card list">${fr.slice(-8).reverse().map(runRow).join('') || '<div class="empty">No runs match these filters.</div>'}</div>`,
+        fr.length ? `latest ${esc(fmtShort(fr[fr.length - 1].date))} · ${km1(fr[fr.length - 1].km)} km` : '')}
       <p class="mono" style="text-align:center;margin:8px 0 0">Telemetry build ${APP_VERSION}</p>
     </div>`;
 }
@@ -918,13 +1003,11 @@ function workoutView(mode) {
       <div class="card kpi"><span class="mono">Last session</span><b class="num" style="font-size:22px">${last ? esc(fmtShort(last.date)) : '—'}</b><small>${last ? (last.km ? `${km1(last.km)} km` : esc(last.time || '')) : 'Nothing logged yet'}</small></div>
     </div>
     ${extra}
-    <h2 class="sec" style="font-size:22px">Coming up</h2>
-    <div class="card days">${upcoming.map(dayRow).join('') || '<div class="empty">Nothing planned for the rest of the block.</div>'}</div>
-    <h2 class="sec" style="font-size:22px">Logged</h2>
-    <div class="card list">${hist.slice(-10).reverse().map(h => h.run ? runRow(h) : `<div class="row tap" role="button" tabindex="0" data-hist="${h.idx}">
+    ${fold('t-coming-' + mode, 'Coming up', `<div class="card days">${upcoming.map(dayRow).join('') || '<div class="empty">Nothing planned for the rest of the block.</div>'}</div>`, upcoming.length ? `next ${esc(fmtDay(upcoming[0].date))}` : '')}
+    ${fold('t-logged-' + mode, 'Logged', `<div class="card list">${hist.slice(-10).reverse().map(h => h.run ? runRow(h) : `<div class="row tap" role="button" tabindex="0" data-hist="${h.idx}">
         <div><div style="font:800 18px var(--f-display)">${D(h.date).getDate()}</div><div class="r-sub">${MON[D(h.date).getMonth()]}</div></div>
         <div style="min-width:0"><div style="font-weight:600">${esc(h.activity)}</div><div class="r-sub">${esc(String(h.notes || '').slice(0, 80))}</div></div>
-        <div class="r-km num">${esc(h.time || '✓')}</div></div>`).join('') || `<div class="empty">No ${esc(label.toLowerCase())} sessions logged yet. Tick one in the plan to start.</div>`}</div>`;
+        <div class="r-km num">${esc(h.time || '✓')}</div></div>`).join('') || `<div class="empty">No ${esc(label.toLowerCase())} sessions logged yet. Tick one in the plan to start.</div>`}</div>`, `${hist.length} total`)}`;
 }
 
 function dayRow(p) {
@@ -964,7 +1047,12 @@ function dayInfo(ds) {
   let kind = main ? main.kind : (gym ? 'strength' : 'rest');
   let label = !main ? (gym ? 'Gym' : 'Rest') : main.kind === 'cross' ? main.activity.split(':')[0] : KIND_SHORT[main.kind];
   const km = runKm || (main && main.run ? main.planned || main.km : 0);
-  return { plan, hist, main, kind, label, km, gym, done, rest: !main && !gym };
+  // past days only: a planned session with nothing logged = missed; a run well under plan = cut short
+  const plannedKm = active.filter(p => p.run).reduce((s, p) => s + (p.planned || 0), 0);
+  const past = ds < TODAY;
+  const missed = past && active.length > 0 && !done;
+  const short = past && done && plannedKm > 0 && runKm > 0 && runKm < plannedKm * 0.8;
+  return { plan, hist, main, kind, label, km, gym, done, rest: !main && !gym, missed, short, plannedKm, runKm };
 }
 
 function renderCalendar() {
@@ -979,10 +1067,12 @@ function renderCalendar() {
     weeks.unshift(...early);
   }
   const legend = [['easy', 'Easy'], ['quality', 'Quality'], ['long', 'Long'], ['strength', 'Strength'], ['cross', 'Sport'], ['rest', 'Rest / recovery'], ['race', 'Race']];
+  const status = '<span class="st"><b>✓</b> Done</span><span class="st st-short"><b>½</b> Cut short (under 80% of plan)</span><span class="st st-missed"><b>✕</b> Missed</span>';
   view.innerHTML = `
     <h2 class="sec">Training calendar</h2>
     <p class="sub">Every week at a glance, in km. Tap a day to see its details.</p>
     <div class="cal-legend">${legend.map(([k, l]) => `<span><i style="background:var(--${k})"></i>${l}</span>`).join('')}</div>
+    <div class="cal-legend cal-status">${status}</div>
     <div class="tiles dow">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => `<span>${d}</span>`).join('')}</div>
     ${M.history.length && M.weeks.length && M.history[0].date < M.weeks[0].start ? `<button class="linkbtn" id="calEarlier" style="margin:4px 0 2px">${state.calEarlier ? 'Hide earlier weeks' : 'Show earlier weeks'}</button>` : ''}
     ${weeks.map(w => {
@@ -992,8 +1082,9 @@ function renderCalendar() {
       for (let i = 0; i < 7; i++) {
         const ds = addDays(w.start, i), info = dayInfo(ds);
         const k = info.rest ? 'rest' : kindVar(info.kind);
-        tiles += `<button class="tile ${info.done ? 'done' : ''} ${ds === TODAY ? 'today' : ''} ${info.rest ? 'is-rest' : ''}" style="--k:var(--${k})" data-day="${ds}" aria-label="${esc(fmtDay(ds))}: ${esc(info.label)}${info.km ? ', ' + km1(info.km) + ' km' : ''}${info.done ? ', done' : ''}">
-          <span class="dn">${D(ds).getDate()}${info.done ? ' ✓' : ''}</span>
+        tiles += `<button class="tile ${info.done ? 'done' : ''} ${info.missed ? 'missed' : ''} ${info.short ? 'short' : ''} ${ds === TODAY ? 'today' : ''} ${info.rest ? 'is-rest' : ''}" style="--k:var(--${k})" data-day="${ds}" aria-label="${esc(fmtDay(ds))}: ${esc(info.label)}${info.km ? ', ' + km1(info.km) + ' km' : ''}${info.missed ? ', missed' : info.short ? `, cut short: ${km1(info.runKm)} of ${km1(info.plannedKm)} km` : info.done ? ', done' : ''}">
+          <span class="dn">${D(ds).getDate()}${info.missed ? ' ✕' : info.short ? ' ½' : info.done ? ' ✓' : ''}</span>
+          ${info.missed ? '<span class="flag">Missed</span>' : info.short ? `<span class="flag">${km1(info.runKm)}/${km1(info.plannedKm)}</span>` : ''}
           <span class="km num">${info.km ? km1(info.km).replace(/\.\d$/, m => info.km >= 10 ? '' : m) : ''}</span>
           <span class="lb">${esc(info.label)}</span>
           ${info.gym && info.kind !== 'strength' ? '<i class="gymdot" title="Strength logged"></i>' : ''}
@@ -1066,8 +1157,11 @@ function latestWeight() { return M.weights.length ? M.weights[M.weights.length -
 
 function todayLoad(ds) {
   const items = [];
-  const plan = M.plan.filter(p => p.date === ds && p.kind !== 'rest');
-  const hist = M.history.filter(h => h.date === ds);
+  // your day = that date's sessions, minus its morning long run (belongs to the day before), plus the next morning's
+  const next = addDays(ds, 1);
+  const inDay = x => (x.date === ds && !isMorningSession(x)) || (x.date === next && isMorningSession(x));
+  const plan = M.plan.filter(p => inDay(p) && p.kind !== 'rest');
+  const hist = M.history.filter(h => inDay(h));
   const pace = longPace();
   plan.forEach(p => {
     const h = hist.find(x => x.activity === p.activity || (p.run && x.run));
@@ -1114,7 +1208,7 @@ function weightSpark(ws) {
  *            (running ≈ 1 kcal per kg per km; sports by MET × kg × hours).
  * Goal adjustment toward target weight, smaller on hard days and zero on long-run/race days.
  */
-const PROFILE_DEFAULTS = { heightCm: 181, targetKg: 74, age: '', sex: '' };
+const PROFILE_DEFAULTS = { heightCm: 181, targetKg: 74, age: '', sex: '', dayStartHour: 12, timezone: 'Asia/Bangkok' };
 const MET = { tennis: 7.3, badminton: 5.5, soccer: 7, strength: 5, sport: 6 };
 const median = a => { const s = a.filter(v => v != null && isFinite(v)).sort((x, y) => x - y); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
@@ -1139,9 +1233,12 @@ function calorieBudget(ds) {
     const k = i.run ? wkg * (i.km || 0) * 1.0 : (MET[i.met] || MET.sport) * wkg * (i.min / 60);
     return { label: i.label, kcal: Math.round(k), done: !!i.done };
   });
-  const estPlanned = planned.filter(p => !p.done).reduce((s, p) => s + p.kcal, 0);
-  const training = doneKcal + estPlanned;
-  const trainingSrc = doneKcal ? (estPlanned ? 'Garmin so far + plan' : 'Garmin') : (planned.length ? 'estimated from plan' : '');
+  // Garmin's actual calories cover finished sessions once synced; until then, estimate those too
+  const est = planned.filter(p => doneKcal ? !p.done : true).reduce((s, p) => s + p.kcal, 0);
+  const training = doneKcal + est;
+  const anyDone = planned.some(p => p.done), allDone = planned.length && planned.every(p => p.done);
+  const trainingSrc = doneKcal ? (est ? 'Garmin so far + plan' : 'Garmin')
+    : !planned.length ? '' : allDone ? 'estimated from your log, until Garmin syncs' : anyDone ? 'estimated from your log and plan' : 'estimated from plan';
 
   const burn = bmr + neat + training;
 
@@ -1167,9 +1264,11 @@ function profileForm() {
       <label class="f">Height cm<input id="pHeight" class="num" inputmode="numeric" value="${esc(P.heightCm)}"></label>
       <label class="f">Target weight kg<input id="pTarget" class="num" inputmode="decimal" value="${esc(P.targetKg)}"></label>
       <label class="f">Age<input id="pAge" class="num" inputmode="numeric" placeholder="optional" value="${esc(P.age)}"></label>
+      <label class="f">Day starts at<select id="pDayStart">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${+P.dayStartHour === h ? 'selected' : ''}>${pad(h)}:00</option>`).join('')}</select></label>
+      <label class="f">Time zone<input id="pTz" value="${esc(P.timezone)}" spellcheck="false" autocapitalize="off"></label>
       <label class="f">Sex<select id="pSex"><option value="">—</option><option value="M" ${P.sex === 'M' ? 'selected' : ''}>Male</option><option value="F" ${P.sex === 'F' ? 'selected' : ''}>Female</option></select></label>
     </div>
-    <p class="desc fine" style="margin:0">Age and sex are only used if Garmin's resting burn isn't available.</p>
+    <p class="desc fine" style="margin:0">Your day (nutrition, calories, the Today view) runs from this hour, while you're asleep, until the same time next day. Age and sex are only used if Garmin's resting burn isn't available.</p>
     <button class="btn" type="submit">Save profile</button>
   </form>`;
 }
@@ -1260,6 +1359,32 @@ function trendLine(vals, color, label) {
     <circle cx="${x(vals.length - 1)}" cy="${y(vals[vals.length - 1])}" r="3" fill="${color}"/></svg>`;
 }
 
+/* Lactate threshold: HR (blue) and pace (red, faster = higher) on their own scales, one shared
+   timeline; only the latest value of each is labelled. */
+function ltTrend(rows) {
+  rows = rows.filter(f => num(f.ltHr) > 0 || secs(f.ltPace) > 0);
+  if (rows.length < 2) return '';
+  const hr = rows.map(f => num(f.ltHr) > 0 ? num(f.ltHr) : null), pc = rows.map(f => secs(f.ltPace) > 0 ? secs(f.ltPace) : null);
+  const W = 190, H = 46, L = 3, R = 54, T = 6, B = 6, n = rows.length;
+  const x = i => L + (W - L - R) * i / (n - 1);
+  const series = (vals, invert, color, fmt) => {
+    const v = vals.filter(z => z != null); if (v.length < 2) return '';
+    const lo = Math.min(...v), hi = Math.max(...v), sp = hi - lo || 1;
+    const y = z => T + (H - T - B) * (invert ? (z - lo) / sp : 1 - (z - lo) / sp);
+    const pts = vals.map((z, i) => z == null ? null : [x(i), y(z)]).filter(Boolean);
+    const last = pts[pts.length - 1], lastV = v[v.length - 1];
+    return { svg: `<polyline points="${pts.map(p => p.map(c => c.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${color}"/>`, ly: last[1], label: fmt(lastV), color };
+  };
+  const a = series(hr, false, 'var(--quality)', v => `${Math.round(v)} bpm`), b = series(pc, true, 'var(--race)', v => `${paceStr(v)}/km`);
+  const labs = [a, b].filter(Boolean).sort((p, q) => p.ly - q.ly);
+  if (labs.length === 2 && labs[1].ly - labs[0].ly < 12) { const mid = (labs[0].ly + labs[1].ly) / 2; labs[0].ly = mid - 6; labs[1].ly = mid + 6; }
+  return `<svg class="trend" viewBox="0 0 ${W} ${H}" role="img" aria-label="Lactate threshold trend: heart rate ${a ? a.label : 'n/a'}, pace ${b ? b.label : 'n/a'}">
+    ${a ? a.svg : ''}${b ? b.svg : ''}
+    ${labs.map(l => `<text x="${W - R + 6}" y="${Math.max(9, Math.min(H - 2, l.ly + 3.5))}" font-size="10" font-weight="700" fill="${l.color}" font-family="var(--f-mono)">${l.label}</text>`).join('')}
+  </svg>`;
+}
+
 function fitnessSection() {
   const dly = M.garminDaily;
   const today = dly.length ? dly[dly.length - 1] : null;
@@ -1320,23 +1445,44 @@ function fitnessSection() {
   // Race predictions
   const race = M.runs.filter(r => r.kind === 'race' && r.km >= 5 && secs(r.time)).pop();
   const dists = [['5K', 5000], ['10K', 10000], ['Half', 21097.5], ['Marathon', 42195]];
-  const fromRace = race ? dists.map(([, m]) => secs(race.time) * Math.pow(m / (race.km * 1000), 1.06)) : null;
+  // personal records: fastest logged run at each distance (98–106% of it), scaled to the exact distance
+  const prs = dists.map(([n, m]) => {
+    const fromRuns = M.runs.filter(r => r.km * 1000 >= m * 0.98 && r.km * 1000 <= m * 1.06 && secs(r.time) > 0)
+      .map(r => ({ t: secs(r.time) * m / (r.km * 1000), date: r.date, src: 'whole logged run' }));
+    const fromTab = M.prs.filter(p => p.dist === n && p.sec > 0).map(p => ({ t: p.sec, date: p.date, src: /^garmin/i.test(p.source) ? 'best effort in a run' : 'entered by you' }));
+    return [...fromTab, ...fromRuns].sort((a, b) => a.t - b.t)[0] || null;
+  });
+  const hasPr = prs.some(Boolean);
   const fromVo2 = vo2 ? dists.map(([, m]) => vdotTime(vo2.v, m)) : null;
 
+  // Weekly load (Mon–Sun), last 6 weeks, each bar labelled. Benchmark: your own optimal band,
+  // 0.8–1.3 × your chronic weekly load — the same ratio Garmin's acute-load gauge is built on.
   const loadBars = (() => {
     if (!hasLoad) return '';
-    const days = []; for (let i = 27; i >= 0; i--) days.push(addDays(TODAY, -i));
-    const max = Math.max(50, ...days.map(d => loadByDate[d] || 0)), W = 300, H = 60, bw = W / 28;
-    return `<svg viewBox="0 0 ${W} ${H + 12}" class="spark" role="img" aria-label="Daily training load, last 28 days">${days.map((d, i) => { const v = loadByDate[d] || 0, h = v / max * H; return `<rect x="${i * bw + 1}" y="${H - h}" width="${bw - 2}" height="${Math.max(h, v ? 2 : 0)}" rx="1.5" fill="${i >= 21 ? 'var(--quality)' : 'color-mix(in srgb,var(--quality) 40%,transparent)'}" data-tip="${esc(fmtShort(d))}|Load ${Math.round(v)}"/>`; }).join('')}
-      <text x="0" y="${H + 11}" font-size="9" fill="var(--ink-3)" font-family="var(--f-mono)">4 wk ago</text><text x="${W}" y="${H + 11}" text-anchor="end" font-size="9" fill="var(--ink-3)" font-family="var(--f-mono)">today</text></svg>`;
+    const wk0 = monday(TODAY), wks = [];
+    for (let i = 5; i >= 0; i--) { const s0 = addDays(wk0, -7 * i); wks.push({ s0, v: sumLoad(s0, addDays(s0, 6)), cur: i === 0 }); }
+    const lo = chronic ? chronic * 0.8 : null, hi = chronic ? chronic * 1.3 : null;
+    const W = 320, H = 130, L = 4, R = 4, T = 8, B = 18, bw = (W - L - R) / wks.length;
+    const max = Math.max(100, hi || 0, ...wks.map(w => w.v)) * 1.15, y = v => T + (H - T - B) * (1 - v / max);
+    let g = '';
+    if (chronic) g += `<rect x="${L}" y="${y(hi)}" width="${W - L - R}" height="${y(lo) - y(hi)}" fill="var(--go)" opacity=".12"/>
+      <line x1="${L}" x2="${W - R}" y1="${y(chronic)}" y2="${y(chronic)}" stroke="var(--go)" stroke-dasharray="3 3" stroke-width="1"/>`;
+    wks.forEach((w, i) => {
+      const x = L + i * bw + bw * 0.2, wd = bw * 0.6, inBand = chronic && w.v >= lo && w.v <= hi;
+      const col = !chronic || (w.cur && w.v <= hi) ? 'var(--quality)' : w.v > hi ? 'var(--race)' : w.v < lo ? 'var(--rest)' : 'var(--go)';   // this week is still filling up
+      g += `<rect x="${x}" y="${y(w.v)}" width="${wd}" height="${Math.max(0, y(0) - y(w.v))}" rx="3" fill="${col}" opacity="${w.cur ? .55 : 1}" data-tip="Week of ${esc(fmtShort(w.s0))}|Load ${Math.round(w.v)}${w.cur ? ' (so far)' : ''}${chronic ? `|${w.cur && w.v <= hi ? `${Math.max(0, Math.round(lo - w.v))} more to reach your range` : inBand ? 'In your optimal range' : w.v > hi ? 'Above your optimal range' : 'Below your optimal range'}` : ''}"/>
+        ${y(0) - y(w.v) > 20 ? `<text x="${x + wd / 2}" y="${y(w.v) + 14}" text-anchor="middle" font-size="11" font-weight="700" fill="#fff" font-family="var(--f-mono)">${Math.round(w.v)}</text>` : `<text x="${x + wd / 2}" y="${y(w.v) - 4}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)" font-family="var(--f-mono)">${Math.round(w.v)}</text>`}
+        <text x="${x + wd / 2}" y="${H - 5}" text-anchor="middle" font-size="9.5" fill="${w.cur ? 'var(--ink)' : 'var(--ink-3)'}" font-family="var(--f-mono)">${w.cur ? 'this wk' : esc(fmtShort(w.s0))}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" class="loadweeks" role="img" aria-label="Weekly training load, last 6 weeks">${g}</svg>
+      ${chronic ? `<div class="legend"><span><i style="background:var(--go);opacity:.35"></i>Your optimal range ${Math.round(lo)}–${Math.round(hi)} / week</span><span><i style="background:var(--race)"></i>Above</span><span><i style="background:var(--rest)"></i>Below</span><span><i style="background:var(--quality)"></i>This week so far</span></div>` : ''}`;
   })();
 
   const waiting = '<p class="desc">Fills in after the Garmin sync runs.</p>';
-  return `
-    <h2 class="sec" style="margin:14px 0 0">Fitness</h2>
+  return `<div class="stack">
     <div class="kpis fit">
       <div class="card kpi"><span class="mono">VO2 max</span><b class="num">${vo2 ? vo2.v : '—'}</b><small>${vo2 ? esc(vo2.src) : 'Not available yet'}${vo2Line.length > 1 ? ` · ${vo2Line[vo2Line.length - 1] - vo2Line[0] >= 0 ? '+' : ''}${(vo2Line[vo2Line.length - 1] - vo2Line[0]).toFixed(1)} since ${esc(M.fitness.find(f => f.vo2) ? M.fitness.find(f => f.vo2).label : 'start')}` : ''}</small>${trendLine(vo2Line, 'var(--quality)')}</div>
-      <div class="card kpi"><span class="mono">Lactate threshold</span><b class="num">${lt ? esc(lt.ltPace || '—') : '—'}<small>${lt && lt.ltPace ? ' /km' : ''}</small></b><small>${lt && lt.ltHr ? `${esc(lt.ltHr)} bpm · ${esc(lt.label)}` : 'From your sheet'}${ltLine.length > 1 ? ` · ${ltGain >= 0 ? '' : '+'}${ltGain >= 0 ? '−' : ''}${fmtDur(Math.abs(ltGain))}/km since ${esc(ltFirst.label)}` : ''}</small>${trendLine(ltLine.map(v => -v), 'var(--quality)', `Lactate threshold pace trend from ${paceStr(ltLine[0])} to ${paceStr(ltLine[ltLine.length - 1])} per km`)}</div>
+      <div class="card kpi"><span class="mono">Lactate threshold</span><b class="num">${lt ? esc(lt.ltPace || '—') : '—'}<small>${lt && lt.ltPace ? ' /km' : ''}</small></b><small>${ltLine.length > 1 ? `${ltGain >= 0 ? `${Math.round(ltGain)} s/km faster` : `${Math.round(-ltGain)} s/km slower`} since ${esc(ltFirst.label)}` : 'From your sheet'}</small>${ltTrend(M.fitness)}</div>
     </div>
     <div class="card fitcard">
       <header><div><div class="mono">Readiness check</div>${verdict ? `<div class="pline"><span class="dot" style="background:var(--${verdict[1] === 'amber' ? 'long' : verdict[1]})"></span> ${verdict[0]}</div>` : '<div class="pline">Waiting for Garmin data</div>'}</div></header>
@@ -1347,15 +1493,30 @@ function fitnessSection() {
       <header><div><div class="mono">Training load</div>${ratio != null ? `<div class="pline num">${Math.round(acute)} <small>acute · ratio ${ratio.toFixed(2)}</small> <span class="chip k-${band[1] === 'go' ? 'easy' : band[1] === 'amber' ? 'long' : band[1] === 'warn' ? 'race' : 'rest'}" style="margin-left:4px">${band[0]}</span></div>` : hasLoad ? `<div class="pline num">${Math.round(plain7)} <small>last 7 days</small></div>` : '<div class="pline">—</div>'}</div></header>
       ${hasLoad ? loadBars : ''}
       ${!hasLoad ? waiting : ratio != null
-        ? `<p class="desc fine">Acute ${Math.round(acute)} vs chronic ${Math.round(chronic)} (weekly, recent days weighted more, like Garmin). 0.8–1.3 is the usual sweet spot. Rebuilt from each activity's Garmin load, so expect it close to Garmin's acute load, not identical.</p>`
+        ? `<p class="desc fine">Benchmark: the green band is 0.8–1.3 × your chronic load (${Math.round(chronic)} a week, your 4-week weighted average). Weeks inside it build fitness; above it (red) injury risk rises; below it (grey) fitness drifts, which is expected in recovery and taper weeks like race week. Rebuilt from each activity's Garmin load, so close to Garmin's acute load, not identical.</p>`
         : `<p class="desc fine">Building baseline: ${baselineDays} of 28 days. The ratio appears once there are 4 weeks of load history; the next Garmin sync backfills it.</p>`}
     </div>
     <div class="card fitcard">
       <header><div class="mono">Race predictions</div></header>
-      <div class="tablewrap"><table class="pred"><thead><tr><th></th>${fromVo2 ? `<th>VO2 max ${vo2.v}</th>` : ''}${fromRace ? `<th>Your ${km1(race.km)}K ${esc(race.time.replace(/^0:/, ''))}</th>` : ''}</tr></thead>
-      <tbody>${dists.map(([n], i) => `<tr><th>${n}</th>${fromVo2 ? `<td class="num">${fmtDur(fromVo2[i])}</td>` : ''}${fromRace ? `<td class="num">${fmtDur(fromRace[i])}</td>` : ''}</tr>`).join('')}</tbody></table></div>
-      <p class="desc fine">Telemetry estimates, not Garmin's predictor. VO2 max column uses Daniels' VDOT tables; race column scales your latest race (Riegel). Heat and humidity in Bangkok usually make real times slower than the VO2 max column.</p>
-    </div>`;
+      <div class="tablewrap"><table class="pred"><thead><tr><th></th>${fromVo2 ? `<th>Estimate<br><small>VO2 max ${vo2.v}</small></th>` : ''}<th>My PRs</th></tr></thead>
+      <tbody>${dists.map(([n], i) => `<tr><th>${n}</th>${fromVo2 ? `<td class="num">${fmtDur(fromVo2[i])}</td>` : ''}<td class="num">${prs[i] ? `${fmtDur(prs[i].t)}<small class="prdate">${prs[i].date && /^\d{4}-/.test(prs[i].date) ? `${esc(fmtShort(prs[i].date))} ${D(prs[i].date).getFullYear()} · ` : ''}${esc(prs[i].src)}</small>` : '<span class="r-sub">—</span>'}</td></tr>`).join('')}</tbody></table></div>
+      <p class="desc fine">Garmin's race predictor isn't available through its API, so the estimate is Telemetry's, from your VO2 max (Daniels' VDOT tables). Heat and humidity in Bangkok usually make real times slower than the estimate. PRs are the fastest of: Garmin best efforts (your quickest stretch of that distance inside any run), times you enter, and whole logged runs.</p>
+      <button class="linkbtn" id="editPrs" type="button">Enter a PR</button>
+      <form class="form" id="prForm" hidden autocomplete="off" style="padding:10px 0 0">
+        <div class="grid3">
+          <label class="f">Distance<select id="prDist">${dists.map(([n]) => `<option>${n}</option>`).join('')}</select></label>
+          <label class="f">Time<input id="prTime" class="num" placeholder="24:24" required></label>
+          <label class="f">Date<input id="prDate" type="date" value="${TODAY}"></label>
+        </div>
+        <button class="btn" type="submit">Save PR</button>
+      </form>
+    </div></div>`;
+}
+
+function fitnessSub() {
+  const g = lastVal(M.garminDaily, 'vo2'), f = M.fitness.filter(x => x.vo2).slice(-1)[0];
+  const v = g ? g.vo2 : f ? f.vo2 : null;
+  return v ? `VO2 max ${v}` : '';
 }
 
 /* ================= Activity tab ================= */
@@ -1405,7 +1566,6 @@ function evalCard(a, date) {
   const rpe = garminRpe(a.rpe) || (plan && plan.rpe ? +plan.rpe : null);
   const feel = garminFeel(a.feel);
   return `<form class="card evalcard" id="evalForm" data-key="${esc(a.id)}" data-date="${esc(date)}" data-name="${esc(a.name || '')}" autocomplete="off">
-    <h3>Post-workout evaluation</h3>
     <ul class="load">
       <li><span>Perceived effort</span><span class="num"><b>${rpe ? rpe + '/10' : '—'}</b>${rpe ? `<small> · ${garminRpe(a.rpe) ? 'Garmin' : 'your log'}</small>` : '<small> · not rated</small>'}</span></li>
       <li><span>Feel</span><span><b>${feel || '—'}</b>${feel ? '<small> · Garmin</small>' : ''}</span></li>
@@ -1416,6 +1576,9 @@ function evalCard(a, date) {
     <p class="desc fine">Effort and feel come from your watch's post-run prompt. Leg condition and notes are saved to the Workout Notes tab in your sheet.</p>
   </form>`;
 }
+
+// Garmin's training-effect scale (0–5)
+const teWord = v => v == null ? 'not recorded' : v < 1 ? 'no benefit' : v < 2 ? 'minor' : v < 3 ? 'maintaining' : v < 4 ? 'improving' : v < 5 ? 'highly improving' : 'overreaching';
 
 function renderActivity() {
   if (!state.act && !state.actLoading && !state.actError) { loadActivity(null); }
@@ -1441,7 +1604,8 @@ function renderActivity() {
   const zoneColors = ['var(--rest)', '#9AA3B8', 'var(--quality)', 'var(--easy)', 'var(--long)', 'var(--race)'];
   const metric = (label, val, sub) => `<div class="m"><span class="mono">${label}</span><b class="num">${val}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
   const top3 = recentRuns(a), top3Ids = new Set(top3.map(r => r.id));
-  const fmtWhen = r => { const ds = r.date.slice(0, 10); return `${ds === TODAY ? 'Today' : ds === addDays(TODAY, -1) ? 'Yesterday' : fmtDay(ds)}${r.date.length > 11 ? ' · ' + r.date.slice(11, 16) : ''}`; };
+  const hhmm = sec => { const h = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60); return `${h ? `${h} hour${h === 1 ? '' : 's'} ` : ''}${m} minute${m === 1 ? '' : 's'}`; };
+  const fmtWhen = r => { const ds = r.date.slice(0, 10); return `${ds === TODAY ? 'Today' : ds === addDays(TODAY, -1) ? 'Yesterday' : fmtDay(ds)}${r.durS ? ' · ' + hhmm(r.durS) : ''}`; };
   const opts = (a.recent || []).filter(r => !top3Ids.has(r.id)).map(r => `<option value="${esc(r.id)}" ${r.id === a.id ? 'selected' : ''}>${esc(r.date.slice(5, 10).replace('-', '/'))} · ${esc(r.name || r.type)}${r.km ? ` · ${km1(r.km)} km` : ''}</option>`).join('');
   view.innerHTML = `
     <div class="subrow" style="margin-top:14px"><h2 class="sec" style="margin:0">${a.example ? 'Example activity' : 'Latest activity'}</h2>${state.actLoading ? '<span class="pside">Loading…</span>' : ''}</div>
@@ -1462,24 +1626,36 @@ function renderActivity() {
     ${W ? `<div class="phasebar">${a.phases.map(p => `<span class="ph ph-${p.kind}" style="flex:${p.timeS}"><b>${{ warmup: 'Warm-up', workout: 'Workout', cooldown: 'Cool-down' }[p.kind]}</b> ${km1(p.distM / 1000)} km · ${p.paceS ? paceStr(p.paceS) : '—'}</span>`).join('')}</div>
       <p class="desc fine" style="margin:6px 2px 0">${a.phaseSource === 'workout' ? 'From your Garmin structured workout laps.' : 'Estimated from km pace: slower opening and closing kms. Run a Garmin structured workout for exact boundaries.'} Whole run: ${km1(km)} km at ${paceStr(pace)}/km, ${avgHr ? Math.round(avgHr) : '—'} bpm.</p>` : ''}
     </div>
-    <div class="card chart runcharts"><h3>Over the run</h3>${runCharts(a, rw, rwTot)}</div>
-    <div class="card metrics">
+    ${fold('a-charts', 'Charts', `<div class="card chart runcharts">${runCharts(a, rw, rwTot)}</div>`, '6 charts')}
+    ${fold('a-stats', 'Statistics', `<div class="card metrics">
+      ${metric('Time', fmtDur(timeS), a.elapsedS ? `elapsed ${fmtDur(a.elapsedS)}` : 'timer')}
+      ${metric('Avg pace', pace ? paceStr(pace) : '—', '/km whole run')}
+      ${metric('Best pace', a.maxSpeed ? paceStr(1000 / a.maxSpeed) : '—', '/km peak')}
+      ${metric('GAP', gap ? paceStr(gap) : '—', '/km grade-adj.')}
+      ${metric('Avg HR', avgHr ? Math.round(avgHr) : '—', 'bpm whole run')}
+      ${metric('Max HR', (a.maxHrFit || a.maxHR) ? Math.round(a.maxHrFit || a.maxHR) : '—', 'bpm')}
+      ${a.recoveryHR ? metric('Recovery HR', Math.round(a.recoveryHR), 'bpm drop, 2 min') : ''}
       ${metric('Cadence', (W ? W.cad : avgCad) ? Math.round(W ? W.cad : avgCad) : '—', W ? 'spm workout' : 'spm avg')}
       ${metric('Stride', (W ? W.step : avgStep) ? (W ? W.step : avgStep).toFixed(2) : '—', W ? 'm workout' : 'm avg')}
-      ${metric('GCT', (W ? W.gct : avgGct) ? Math.round(W ? W.gct : avgGct) : '—', 'ms' + (a.gctBalance ? ` · ${a.gctBalance.toFixed(1)}% L` : ''))}
-      ${metric('Vert. osc.', (W ? W.vo : avgVo) ? (W ? W.vo : avgVo).toFixed(1) : '—', 'cm' + (a.vertRatio ? ` · ratio ${a.vertRatio.toFixed(1)}%` : ''))}
-      ${metric('GAP', gap ? paceStr(gap) : '—', '/km')}
-      ${metric('Max HR', (a.maxHrFit || a.maxHR) ? Math.round(a.maxHrFit || a.maxHR) : '—', 'bpm' + (a.recoveryHR ? ` · recovery ${Math.round(a.recoveryHR)}` : ''))}
-      ${metric('Effect', a.te ? a.te.toFixed(1) : '—', a.ate ? `anaerobic ${a.ate.toFixed(1)}` : 'aerobic')}
+      ${metric('GCT', (W ? W.gct : avgGct) ? Math.round(W ? W.gct : avgGct) : '—', W ? 'ms workout' : 'ms avg')}
+      ${a.gctBalance ? metric('GCT balance', a.gctBalance.toFixed(1) + '%', 'left') : ''}
+      ${(W ? W.vo : avgVo) ? metric('Vert. osc.', (W ? W.vo : avgVo).toFixed(1), 'cm') : ''}
+      ${a.vertRatio ? metric('Vert. ratio', a.vertRatio.toFixed(1) + '%', 'lower = efficient') : ''}
+      ${a.avgPower ? metric('Power', Math.round(a.avgPower), 'W avg' + (a.maxPower ? ` · max ${Math.round(a.maxPower)}` : '')) : ''}
+      ${a.steps ? metric('Steps', Math.round(a.steps).toLocaleString(), 'steps') : ''}
+      ${metric('Aerobic TE', a.te ? a.te.toFixed(1) : '—', teWord(a.te))}
+      ${metric('Anaerobic TE', a.ate != null ? a.ate.toFixed(1) : '—', teWord(a.ate))}
       ${metric('Load', a.load ? Math.round(a.load) : '—', 'Garmin load')}
-      ${metric('Perf. cond.', '—', 'not in Garmin API')}
+      ${a.bodyBattery != null ? metric('Body Battery', (a.bodyBattery > 0 ? '+' : '') + Math.round(a.bodyBattery), 'impact') : ''}
+      ${a.vigorousMin != null || a.moderateMin != null ? metric('Intensity min', Math.round((a.vigorousMin || 0) * 2 + (a.moderateMin || 0)), `${Math.round(a.vigorousMin || 0)} vigorous ×2`) : ''}
+      ${a.respiration ? metric('Breathing', Math.round(a.respiration), 'brpm avg') : ''}
+      ${a.sweatMl ? metric('Sweat loss', Math.round(a.sweatMl), 'ml est.') : ''}
       ${metric('Elevation', a.elevGain != null ? '+' + Math.round(a.elevGain) : '—', a.elevLoss != null ? `−${Math.round(a.elevLoss)} m` : 'm')}
-      ${metric('Temp', a.tempC != null ? Math.round(a.tempC) + '°' : '—', 'watch sensor')}
       ${metric('Calories', a.calories ? Math.round(a.calories) : '—', 'kcal')}
-    </div>
-    ${z && zTot ? `<div class="card chart"><h3>Time in heart-rate zones <small class="r-sub">· total ${fmtDur(zTot)}</small></h3>
-      <div class="zones">${[5, 4, 3, 2, 1].map(i => { const v = z.secs[i], lo = z.floors[i - 1], hi = i < 5 ? z.floors[i] - 1 : z.max; return `<div class="zrow"><span class="zl">Zone ${i}<small>${['', 'Warm up', 'Easy', 'Aerobic', 'Threshold', 'Maximum'][i]} · ${lo}–${hi || ''}</small></span><span class="zbar"><i style="width:${zTot ? v / zTot * 100 : 0}%;background:${zoneColors[i]}"></i></span><span class="zv num">${fmtDur(v)}<small>${Math.round(v / zTot * 100)}%</small></span></div>`; }).join('')}${[[0, 'Below zone 1', z.secs[0]], [6, 'No HR signal', z.noHrS || 0]].filter(r => r[2] >= 1).map(([, n, v]) => `<div class="zrow"><span class="zl" style="font-size:13px;color:var(--ink-2)">${n}</span><span class="zbar"><i style="width:${v / zTot * 100}%;background:var(--ink-3)"></i></span><span class="zv num">${fmtDur(v)}<small>${Math.round(v / zTot * 100)}%</small></span></div>`).join('')}</div></div>` : ''}
-    ${a.splits && a.splits.length ? `<div class="card chart"><h3>Splits</h3><div class="tablewrap"><table class="splits"><thead><tr><th>km</th><th>Time</th><th>Pace</th><th>HR</th><th>Cad</th><th>GCT</th><th>Stride</th></tr></thead><tbody>
+    </div>`, `${km1(km)} km · ${a.load ? Math.round(a.load) + ' load' : ''}`)}
+    ${z && zTot ? fold('a-zones', 'Heart-rate zones', `<div class="card chart"><p class="desc" style="margin:0">Total ${fmtDur(zTot)}</p>
+      <div class="zones">${[5, 4, 3, 2, 1].map(i => { const v = z.secs[i], lo = z.floors[i - 1], hi = i < 5 ? z.floors[i] - 1 : z.max; return `<div class="zrow"><span class="zl">Zone ${i}<small>${['', 'Warm up', 'Easy', 'Aerobic', 'Threshold', 'Maximum'][i]} · ${lo}–${hi || ''}</small></span><span class="zbar"><i style="width:${zTot ? v / zTot * 100 : 0}%;background:${zoneColors[i]}"></i></span><span class="zv num">${fmtDur(v)}<small>${Math.round(v / zTot * 100)}%</small></span></div>`; }).join('')}${[[0, 'Below zone 1', z.secs[0]], [6, 'No HR signal', z.noHrS || 0]].filter(r => r[2] >= 1).map(([, n, v]) => `<div class="zrow"><span class="zl" style="font-size:13px;color:var(--ink-2)">${n}</span><span class="zbar"><i style="width:${v / zTot * 100}%;background:var(--ink-3)"></i></span><span class="zv num">${fmtDur(v)}<small>${Math.round(v / zTot * 100)}%</small></span></div>`).join('')}</div></div>`, (() => { const top = [1, 2, 3, 4, 5].reduce((m, i) => z.secs[i] > z.secs[m] ? i : m, 1); return `mostly zone ${top} · ${Math.round(z.secs[top] / zTot * 100)}%`; })()) : ''}
+    ${a.splits && a.splits.length ? fold('a-splits', 'Splits', `<div class="card chart"><div class="tablewrap"><table class="splits"><thead><tr><th>km</th><th>Time</th><th>Pace</th><th>HR</th><th>Cad</th><th>GCT</th><th>Stride</th></tr></thead><tbody>
       ${(() => {
         const groups = W ? a.phases.map(p => ({ p, rows: p.splits })) : [{ p: null, rows: a.splits }];
         const all = groups.flatMap(g => g.rows).map(r => r.timeS / (r.distM / 1000)), fast = Math.min(...all), slow = Math.max(...all);
@@ -1489,8 +1665,8 @@ function renderActivity() {
           g.rows.map(r => row(r, g.p.kind === 'workout' ? '' : 'dim')).join('')).join('');
       })()}
       </tbody><tfoot><tr><td>Total</td><td class="num">${fmtDur(a.splits.reduce((s, x) => s + x.timeS, 0))}</td><td class="num">${pace ? paceStr(pace) : '—'}</td><td class="num">${avgHr ? Math.round(avgHr) : '—'}</td><td class="num">${avgCad ? Math.round(avgCad) : '—'}</td><td class="num">${avgGct ? Math.round(avgGct) : '—'}</td><td class="num">${avgStep ? avgStep.toFixed(2) : '—'}</td></tr></tfoot></table></div>
-      <p class="desc fine">All times use the watch's timer time (pauses excluded), so splits, zones and run/walk add up to ${fmtDur(timeS)}. Total row is the whole run; ${W ? 'header, cards and chart averages are the workout block only (time-weighted).' : 'averages are time-weighted.'}</p></div>` : a.fitError ? `<div class="card empty">${esc(a.fitError)}</div>` : ''}
-    ${evalCard(a, String(a.start || '').slice(0, 10))}`;
+      <p class="desc fine">All times use the watch's timer time (pauses excluded), so splits, zones and run/walk add up to ${fmtDur(timeS)}. Total row is the whole run; ${W ? 'header, cards and chart averages are the workout block only (time-weighted).' : 'averages are time-weighted.'}</p></div>`, `${a.splits.length} splits${W ? ' · warm-up, workout, cool-down' : ''}`) : a.fitError ? `<div class="card empty">${esc(a.fitError)}</div>` : ''}
+    ${(() => { const ds = String(a.start || '').slice(0, 10), n = noteFor(a.id, ds) || {}; return fold('a-eval', 'Self-Evaluation', evalCard(a, ds), n.legs || n.race ? 'saved' : 'not filled in'); })()}`;
 }
 
 /* Stacked charts over the course of a run, sharing one distance axis.
@@ -1622,7 +1798,8 @@ function renderNutrition() {
   const todayTotal = meals.filter(m => m.date === TODAY).reduce((s, m) => s + m.kcal, 0);
   view.innerHTML = `
     <h2 class="sec">Nutrition</h2>
-    <p class="sub">Today so far: <b class="num">${Math.round(todayTotal).toLocaleString()} kcal</b></p>
+    <p class="sub">${esc(fmtDay(TODAY))} so far: <b class="num">${Math.round(todayTotal).toLocaleString()} kcal</b> · <span class="r-sub">day resets at ${pad(DAY_START)}:00</span></p>
+    ${dayNote()}
     ${nutritionTop()}
     ${(() => { const nl = M.plan.find(p => p.date >= TODAY && (p.kind === 'long' || p.kind === 'race') && !p.done && p.planned); if (!nl) return '';
       const f = fuelPlan(nl.planned, nl.kind === 'race');
@@ -1847,6 +2024,7 @@ document.addEventListener('click', e => {
   if (t.dataset.strength) { openLog({ date: t.dataset.strength, activity: 'Strength: Push', type: '', title: 'Strength', run: false, preferS2: true }); return; }
   if (t.dataset.act) { loadActivity(t.dataset.act); return; }
   if (t.id === 'actReload') { state.act = null; loadActivity(state.actId); return; }
+  if (t.id === 'editPrs') { const f = $('#prForm'); if (f) { f.hidden = !f.hidden; if (!f.hidden) $('#prTime').focus(); } return; }
   if (t.id === 'editProfile') { const f = $('#profileForm'); if (f) f.hidden = !f.hidden; return; }
   if (t.id === 'calEarlier') { state.calEarlier = !state.calEarlier; render(); return; }
   if (t.dataset.race) { const r = M.races[+t.dataset.race]; if (r) openRace(r); return; }
@@ -1877,10 +2055,19 @@ document.addEventListener('submit', e => {
     closeSheet();
     run('saveSession', p, 'Saved to your sheet');
   }
+  if (e.target.id === 'prForm') {
+    let t = $('#prTime').value.trim();
+    if (!/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) { toast('Time should look like 24:24 or 1:52:10.'); return; }
+    if (t.split(':').length === 2) t = '0:' + t;
+    run('savePr', { dist: $('#prDist').value, time: t, date: $('#prDate').value || TODAY, source: 'Manual' }, 'PR saved');
+    return;
+  }
   if (e.target.id === 'profileForm') {
     const h = num($('#pHeight').value), tk = num($('#pTarget').value), age = $('#pAge').value.trim(), sex = $('#pSex').value;
+    const ds = +$('#pDayStart').value, tz = $('#pTz').value.trim() || 'Asia/Bangkok';
     if (!(h > 120 && h < 230) || !(tk > 30 && tk < 200)) { toast('Check height (cm) and target weight (kg).'); return; }
-    run('saveProfile', { heightCm: h, targetKg: tk, age: age ? num(age) : '', sex }, 'Profile saved');
+    try { new Intl.DateTimeFormat('en', { timeZone: tz }); } catch (_) { toast('Time zone should look like Asia/Bangkok.'); return; }
+    run('saveProfile', { heightCm: h, targetKg: tk, age: age ? num(age) : '', sex, dayStartHour: ds, timezone: tz }, 'Profile saved');
     return;
   }
   if (e.target.id === 'evalForm') {
@@ -1986,6 +2173,8 @@ document.addEventListener('click', e => {
   if (e.target.closest('#retryBtn')) load();
   if (e.target.closest('#sync') && !IS_PREVIEW && M) renderSetup();
 });
+// roll over to the next day at DAY_START even if the app stays open
+setInterval(() => { if (M && myDayNow().day !== TODAY) render(); }, 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); if (document.visibilityState === 'visible' && !IS_PREVIEW && CONF.ready && M) API.call('getData').then(d => { RAW = d; M = build(d); render(); setSync('', 'Synced'); }).catch(() => {}); });
 load();
 </script>
