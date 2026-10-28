@@ -416,7 +416,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.28-20';
+const APP_VERSION = '2026.10.28-21';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -923,8 +923,7 @@ function aiCard() {
       <ul class="ai-lines">${(d.summary || []).slice(0, 3).map(l => `<li>${esc(l)}</li>`).join('')}</ul>
       ${d.alternative ? `<p class="ai-alt"><b>Instead:</b> ${esc(d.alternative)}</p>` : ''}
       ${A.more ? `<div class="ai-more">${mdLite(d.details)}</div>` : ''}
-      <div class="ai-foot"><button class="linkbtn" id="aiMore" type="button">${A.more ? 'Show less' : 'Read more'}</button>
-        <span class="r-sub">${d.example ? 'Example (preview)' : `Claude ${esc(String(d.model || '').replace('claude-', ''))}${d.usage && d.usage.usd != null ? ` · ${usd(d.usage.usd)}` : ''}${d.spend ? ` · ${usd(d.spend.month)} this month` : ''}`}</span></div>`}
+      <div class="ai-foot"><button class="linkbtn" id="aiMore" type="button">${A.more ? 'Show less' : 'Read more'}</button></div>`}
     <form id="askForm" class="askbox" autocomplete="off">
       <input id="askQ" maxlength="500" placeholder="Ask Telemetry about your training…" value="${esc(state.ask.q)}">
       <button class="btn sm" type="submit" ${state.ask.loading ? 'disabled' : ''}>${state.ask.loading ? '…' : 'Ask'}</button>
@@ -932,6 +931,7 @@ function aiCard() {
     ${state.ask.error ? `<p class="desc warn-t">${esc(state.ask.error)}</p>` : ''}
     ${state.ask.answer ? `<div class="ai-answer"><div class="mono">${esc(state.ask.q)}</div>${mdLite(state.ask.answer)}</div>` : ''}
     <p class="desc fine" style="margin:6px 0 0">AI-written from your data. Coaching suggestions, not medical advice.</p>
+    ${d && !A.error ? `<p class="desc fine num" style="margin:2px 0 0">${d.example ? 'Example (preview)' : `Claude ${esc(String(d.model || '').replace('claude-', ''))}${d.usage && d.usage.usd != null ? ` · ${usd(d.usage.usd)} this summary` : ''}${d.spend ? ` · ${usd(d.spend.month)} this month` : ''}`}</p>` : ''}
   </div>`;
 }
 
