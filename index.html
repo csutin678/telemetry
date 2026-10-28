@@ -196,25 +196,37 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .tile .km{font:800 21px/1.15 var(--f-display);min-height:24px}
 .tile .lb{font-size:10.5px;color:var(--ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
 .tile.done{opacity:.55}
-.tile.missed{opacity:1;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--race) 9%,var(--card)) 0 6px,var(--card) 6px 12px);border-top-color:var(--race);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--race) 55%,transparent)}
-.tile.missed .km,.tile.missed .lb{text-decoration:line-through;text-decoration-color:var(--race);text-decoration-thickness:2px;color:var(--ink-3)}
-.tile.missed .dn{color:var(--race);font-weight:700}
-.tile.short{opacity:1;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--long) 70%,transparent)}
-.tile.short .dn{color:var(--long);font-weight:700}
-.tile .flag{position:absolute;left:50%;transform:translateX(-50%);bottom:-7px;font:700 9px/1 var(--f-mono);letter-spacing:.03em;text-transform:uppercase;padding:2px 5px;border-radius:5px;background:var(--race);color:#fff;white-space:nowrap}
-.tile.short .flag{background:var(--long)}
+.tile.missed{opacity:1;background:color-mix(in srgb,var(--rest) 7%,var(--card));border-top-color:color-mix(in srgb,var(--rest) 45%,transparent)}
+.tile.missed .km,.tile.missed .lb,.tile.missed .dn{color:var(--ink-3);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--ink-3) 70%,transparent)}
+.tile .of{font:600 10px var(--f-mono);color:var(--ink-3);margin-left:1px}
 .cal-status{margin-top:-6px}
 .cal-status .st{display:inline-flex;gap:5px;align-items:center}
 .cal-status .st b{font-weight:800}
-.cal-status .st-missed b{color:var(--race)}
-.cal-status .st-short b{color:var(--long)}
-.tiles{row-gap:12px}
+.cal-status .st-missed s{color:var(--ink-3)}
+.cal-status small{color:var(--ink-3);font-size:11px}
+.tiles{row-gap:5px}
 .tile.today{opacity:1;box-shadow:0 0 0 2px var(--ink)}
 .tile.is-rest{background:color-mix(in srgb,var(--rest) 8%,var(--card))}
 .tile:hover{filter:brightness(.97)}
 .gymdot{position:absolute;top:6px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--strength)}
-.carbs{padding:16px 18px;margin-bottom:12px}
+.carbs{padding:16px 18px}
 .kpis.fit{margin-top:0}
+.aicard{padding:14px 16px;margin-top:10px;display:grid;gap:8px;border-left:4px solid #E8735A}
+.aicard.ai-off{border-left-color:var(--line)}
+.ai-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ai-head{display:flex;align-items:flex-start;gap:8px}
+.ai-head h3{flex:1;margin:0;font:800 19px/1.25 var(--f-display);text-wrap:balance}
+.aidot{width:10px;height:10px;border-radius:50%;margin-top:7px;flex:none;background:var(--rest)}
+.ai-go,.ai-done{background:var(--go)}.ai-adjust{background:var(--long)}.ai-rest{background:var(--race)}
+.ai-score{font:800 26px/1 var(--f-display)}.ai-score small{font-size:13px;color:var(--ink-3)}
+.ai-lines{margin:0;padding-left:18px;display:grid;gap:3px;font-size:14.5px}
+.ai-alt{margin:0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--long) 12%,transparent);font-size:14px}
+.ai-more{font-size:14px;color:var(--ink-2)}.ai-more p{margin:6px 0}.ai-more ul{margin:4px 0;padding-left:18px}
+.ai-foot{display:flex;justify-content:space-between;align-items:center}
+.ai-skel{display:grid;gap:7px}.ai-skel i{display:block;height:12px;border-radius:6px;background:var(--line);animation:pulse 1.2s infinite}.ai-skel i:nth-child(2){width:85%}.ai-skel i:nth-child(3){width:60%}
+.askbox{display:flex;gap:8px;margin-top:4px}
+.askbox input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.ai-answer{padding:10px 12px;border-radius:10px;background:var(--bg);font-size:14px}.ai-answer p{margin:6px 0}.ai-answer ul{margin:4px 0;padding-left:18px}
 details.fold{margin-top:14px;border-top:1px solid var(--line)}
 details.fold > summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 2px 10px;cursor:pointer;user-select:none}
 details.fold > summary::-webkit-details-marker{display:none}
@@ -223,14 +235,14 @@ details.fold > summary::-webkit-details-marker{display:none}
 details.fold .chev{width:20px;height:20px;flex:none;fill:none;stroke:var(--ink-2);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
 details.fold[open] .chev{transform:rotate(180deg)}
 details.fold > summary:focus-visible{outline:2px solid var(--quality);outline-offset:2px;border-radius:8px}
-.fold-b{padding:2px 0 6px}
+.fold-b{padding:2px 0 6px;display:grid;gap:12px}
 .fold-b > .card{margin:0}
 svg.loadweeks{display:block;width:100%;height:auto;margin-top:8px}
 .prdate{display:block;font:500 11px var(--f-body);color:var(--ink-3)}
 table.pred thead small{font-weight:500;text-transform:none;letter-spacing:0}
 .daynote{margin:2px 0 6px;font-size:13px;color:var(--ink-2);background:color-mix(in srgb,var(--long) 12%,transparent);padding:6px 10px;border-radius:8px;display:inline-block}
 .evalcard{padding:16px 18px;display:grid;gap:10px;margin-top:0}
-.kcal{padding:16px 18px;margin-bottom:12px}
+.kcal{padding:16px 18px}
 .kcal .bar{margin:10px 0 6px}
 .kcal ul.load{margin-top:10px}
 .goalrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
@@ -325,7 +337,7 @@ svg.spark{display:block;width:100%;height:auto;margin:4px 0}
 .cal-key{display:flex;flex-wrap:wrap;gap:12px;margin:10px 4px 2px;color:var(--ink-2);font-size:12.5px}
 
 /* nutrition */
-.form{padding:16px 18px;display:grid;gap:10px;margin-bottom:12px}
+.form{padding:16px 18px;display:grid;gap:10px}
 .form .two{display:grid;grid-template-columns:1fr 110px;gap:10px}
 label.f{display:grid;gap:4px;font-size:13px;color:var(--ink-2);min-width:0}
 .f input,.f select,.f textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
@@ -401,7 +413,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.28-10';
+const APP_VERSION = '2026.10.28-12';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -449,6 +461,15 @@ const Mock = (() => {
       return { ok: true, data: this.getData() };
     },
     addMeal(m) { raw.nutrition = raw.nutrition || []; raw.nutrition.push([raw.nutrition.length + 2, Math.random().toString(36).slice(2, 10), m.date, m.meal, m.item, String(m.kcal), m.notes || '']); return { ok: true, data: this.getData() }; },
+    aiSummary(p) {
+      const ex = { before: { headline: 'Ready for today\'s session, keep it controlled', status: 'go', score: null, summary: ['HRV and resting HR are in your normal range.', 'Load ratio is optimal; no reason to hold back the plan.', 'Hot evening: start 10 s/km easier and drink early.'], details: 'Example text. On the live app this is written by Claude from your HRV, sleep, Body Battery, load ratio and today\'s plan.\n- **Warm-up:** 10–15 min easy\n- **Main set:** as planned\n- **Watch:** HR drift above 170 late on', alternative: null },
+        after: { headline: 'Solid HM-pace session, slight fade late', status: 'done', score: 7, summary: ['Workout block 5:42/km at 168 bpm, close to target.', 'Cadence held; GCT rose ~10 ms in the last 2 km.', 'Refuel with carbs + 25 g protein within the hour.'], details: 'Example text. On the live app Claude analyses splits, zones, cadence, GCT and run/walk for the logged run.', alternative: null },
+        evaluated: { headline: 'Good work; heavy legs match the late HR drift', status: 'done', score: 7, summary: ['Your RPE 8 fits the HR and pace data.', 'Heavy legs after km 6 line up with the GCT rise.', 'Keep tomorrow easy and prioritise sleep.'], details: 'Example text using your self-evaluation alongside the data.', alternative: null } };
+      return { ...ex[p.stage], example: true, model: 'example' };
+    },
+    aiAsk(p) { return { answer: 'Example answer (preview only). On the live app Claude answers from your own data: plan, recent runs, Garmin signals, load and races.' }; },
+    aiWeekly() { return { headline: 'Example weekly review', score: 7, summary: ['Example line one.', 'Example line two.', 'Example line three.'], details: 'Preview only. The live app reviews last week\'s plan versus what you did, load trend, recovery and notes.' }; },
+    aiRace() { return { headline: 'Example race-week briefing', summary: ['Example line one.', 'Example line two.', 'Example line three.'], details: 'Preview only. The live app covers taper, pacing for the heat, race-morning timeline and fuelling.' }; },
     savePr(p) { raw.prs = (raw.prs || []).filter(r => r[1] !== p.dist); raw.prs.push([0, p.dist, p.time, p.date, p.source]); return { ok: true, data: this.getData() }; },
     saveProfile(p) { raw.profile = Object.entries(p).map(([k, v]) => [0, k, String(v)]); return { ok: true, data: this.getData() }; },
     saveNote(n) { raw.notes = (raw.notes || []).filter(r => r[1] !== n.key); raw.notes.push([0, n.key, n.date, n.name, n.legs || '', n.raceNotes || '']); return { ok: true, data: this.getData() }; },
@@ -754,6 +775,8 @@ function fold(id, title, body, sub) {
 document.addEventListener('toggle', e => {
   const d = e.target; if (!d.matches || !d.matches('details.fold')) return;
   d.open ? state.open.add(d.dataset.fold) : state.open.delete(d.dataset.fold);
+  if (d.open && d.dataset.fold === 'ai-week') loadWeekly();
+  if (d.open && d.dataset.fold === 'ai-race') loadRace();
   try { localStorage.setItem('telemetry.open', JSON.stringify([...state.open])); } catch (_) {}
 }, true);
 
@@ -761,6 +784,194 @@ function dayNote() {
   const n = myDayNow();
   if (!n.carried) return '';
   return `<p class="daynote">It's ${pad(n.hour)}:${pad(n.minute)} on ${esc(fmtDay(n.cal))}. Still your ${esc(DOW[D(n.day).getDay()])} until ${pad(DAY_START)}:00.</p>`;
+}
+
+/* ================= AI coach (Claude via Apps Script) ================= */
+state.ai = { key: null, loading: false, data: null, error: '', more: false };
+state.ask = { q: '', loading: false, answer: '', error: '' };
+state.aiWeek = { key: null, loading: false, data: null, error: '' };
+state.aiRace = { key: null, loading: false, data: null, error: '' };
+
+const hashStr = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
+
+/** Load numbers the same way the Fitness card does. */
+function loadStats() {
+  const byDate = {}; M.garminDaily.forEach(r => { if (r.load != null) byDate[r.date] = r.load; });
+  const first = Object.keys(byDate).sort()[0];
+  const sum = (a, b) => { let s = 0; for (let d = a; d <= b; d = addDays(d, 1)) s += byDate[d] || 0; return s; };
+  const out = { last7: Math.round(sum(addDays(TODAY, -6), TODAY)), weeks: [] };
+  for (let i = 5; i >= 0; i--) { const s0 = addDays(monday(TODAY), -7 * i); out.weeks.push({ weekOf: s0, load: Math.round(sum(s0, addDays(s0, 6))) }); }
+  if (first && daysBetween(first, TODAY) >= 27) {
+    let ea = null, ec = null;
+    for (let d = first; d <= TODAY; d = addDays(d, 1)) { const v = byDate[d] || 0; ea = ea == null ? v : ea + 0.25 * (v - ea); ec = ec == null ? v : ec + (2 / 29) * (v - ec); }
+    out.acute = Math.round(ea * 7); out.chronic = Math.round(ec * 7); out.ratio = ec > 0 ? +(ea / ec).toFixed(2) : null;
+    out.optimalRange = [Math.round(ec * 7 * 0.8), Math.round(ec * 7 * 1.3)];
+  } else out.note = 'less than 28 days of load history; no ratio yet';
+  return out;
+}
+
+/** The latest Garmin run if it falls inside "your day" (noon to noon). */
+function activityInMyDay(a) {
+  if (!a || !a.id || !a.start) return false;
+  const d = String(a.start).slice(0, 10), h = +String(a.start).slice(11, 13);
+  const my = h < DAY_START ? addDays(d, -1) : d;
+  return my === TODAY;
+}
+
+function compactActivity(a) {
+  if (!a || !a.id) return null;
+  const r1 = v => v == null ? null : Math.round(v * 10) / 10;
+  return {
+    name: a.name, start: a.start, eventType: a.eventType, distanceKm: r1((a.totalDistM || a.distanceM || 0) / 1000),
+    timerTime: fmtDur(a.timerS || a.durationS || 0), elapsed: a.elapsedS ? fmtDur(a.elapsedS) : null,
+    avgPace: a.avg && a.avg.paceS ? paceStr(a.avg.paceS) : null, avgHr: a.avg ? Math.round(a.avg.hr || 0) : null, maxHr: a.maxHrFit || a.maxHR,
+    workoutBlock: a.work ? { km: r1(a.work.distM / 1000), pace: paceStr(a.work.paceS), hr: Math.round(a.work.hr || 0), cadence: Math.round(a.work.cad || 0), gctMs: Math.round(a.work.gct || 0), strideM: a.work.step ? +a.work.step.toFixed(2) : null } : null,
+    phases: (a.phases || []).map(p => ({ kind: p.kind, km: r1(p.distM / 1000), time: fmtDur(p.timeS), pace: p.paceS ? paceStr(p.paceS) : null, hr: Math.round(p.hr || 0), cadence: Math.round(p.cad || 0) })),
+    splits: (a.splits || []).slice(0, 30).map(s => ({ km: s.km, time: fmtDur(s.timeS), pace: paceStr(s.timeS / (s.distM / 1000)), hr: Math.round(s.hr || 0), cad: Math.round(s.cad || 0), gct: Math.round(s.gct || 0) })),
+    hrZonesMinutes: a.zones ? { z1: Math.round(a.zones.secs[1] / 60), z2: Math.round(a.zones.secs[2] / 60), z3: Math.round(a.zones.secs[3] / 60), z4: Math.round(a.zones.secs[4] / 60), z5: Math.round(a.zones.secs[5] / 60) } : null,
+    runWalkMin: a.runWalkEst ? { run: Math.round(a.runWalkEst.runS / 60), walk: Math.round(a.runWalkEst.walkS / 60) } : null,
+    aerobicTE: a.te, anaerobicTE: a.ate, garminLoad: a.load, gradeAdjPace: a.gapSpeed ? paceStr(1000 / a.gapSpeed) : null,
+    elevationGainM: a.elevGain, temperatureC: a.tempC, garminRpe: garminRpe(a.rpe), garminFeel: garminFeel(a.feel)
+  };
+}
+
+function aiContext(extra) {
+  const P = M.profile, w = latestWeight(), C = calorieBudget(TODAY), L = todayLoad(TODAY);
+  const vo2 = lastVal(M.garminDaily, 'vo2'), fv = M.fitness.filter(f => f.vo2).slice(-1)[0], lt = M.fitness.filter(f => f.ltPace).slice(-1)[0];
+  const plan = d => M.plan.filter(p => p.date === d).map(p => ({ date: p.date, session: p.title, type: p.type || null, plannedKm: p.planned || null, done: p.done, actualKm: p.km || null }));
+  return {
+    yourDay: TODAY, dayOfWeek: DOW[D(TODAY).getDay()], clockBangkok: (() => { const n = myDayNow(); return `${n.cal} ${pad(n.hour)}:${pad(n.minute)}`; })(),
+    athlete: { heightCm: P.heightCm, weightKg: w ? w.kg : null, targetKg: P.targetKg, vo2max: vo2 ? vo2.vo2 : fv ? fv.vo2 : null, lactateThreshold: lt ? { pace: lt.ltPace, hr: lt.ltHr } : null },
+    todaysTraining: L.items.map(i => ({ session: i.label, estMinutes: Math.round(i.min), done: !!i.done })),
+    planNext3Days: [1, 2, 3].flatMap(k => plan(addDays(TODAY, k))),
+    week: { number: M.current.n, plannedKm: M.current.planned, doneKm: +M.current.actual.toFixed(1), sessionsTicked: `${M.current.ticked}/${M.current.sessions}` },
+    garminLast8Days: M.garminDaily.slice(-8).map(r => ({ date: r.date, hrv: r.hrv, hrv7: r.hrv7, hrvStatus: r.hrvStatus, hrvBaseline: r.hrvLo ? [r.hrvLo, r.hrvHi] : null, restingHr: r.rhr, restingHr7: r.rhr7, bodyBatteryWake: r.bb, stress: r.stress, sleepH: r.sleep, load: r.load })),
+    load: loadStats(),
+    recentRuns: M.runs.slice(-10).map(r => ({ date: r.date, type: r.type || r.activity, km: r.km, time: r.time, pace: r.paceSec ? paceStr(r.paceSec) : null, hr: r.hr ? Math.round(r.hr) : null, rpe: r.rpe || null })),
+    upcomingRaces: M.races.filter(r => r.date && r.date >= TODAY).slice(0, 4).map(r => ({ name: r.name, date: r.date, km: r.dist, daysAway: daysBetween(TODAY, r.date), goal: !!r.goal })),
+    nutritionToday: { calorieTarget: Math.round(C.target), eaten: Math.round(C.eaten), carbBandGPerKg: [L.band.lo, L.band.hi], dayType: L.band.name },
+    ...extra
+  };
+}
+
+/** Which stage today is in, and the cache key that changes only when the stage or its inputs change. */
+async function aiStage() {
+  const items = todayLoad(TODAY).items, sheetDone = items.some(i => i.done && (i.run || i.km));
+  let act = null;
+  if (!IS_PREVIEW || window.TELEMETRY_EXAMPLE_ACTIVITY) {
+    try { act = state.actCache && Object.values(state.actCache).find(activityInMyDay) || null; if (!act) { const r = await fetchActivity(null); if (activityInMyDay(r)) act = r; } } catch (e) {}
+  }
+  if (!act && !sheetDone) return { stage: 'before', key: `${TODAY}|before|${hashStr(JSON.stringify(M.garminDaily.slice(-2)) + items.map(i => i.label).join())}` };
+  const n = act ? (noteFor(act.id, String(act.start).slice(0, 10)) || {}) : (noteFor(null, TODAY, 'Run') || {});
+  const evaluated = !!(n.legs || n.race);
+  return { stage: evaluated ? 'evaluated' : 'after', act, note: n, key: `${TODAY}|${evaluated ? 'evaluated' : 'after'}|${act ? act.id : 'sheet'}|${hashStr((n.legs || '') + (n.race || ''))}` };
+}
+
+async function loadAiSummary(force) {
+  if (state.ai.loading) return;
+  const st = await aiStage();
+  if (!force && st.key === state.ai.key && (state.ai.data || state.ai.error)) return;
+  state.ai = { ...state.ai, key: st.key, loading: true, error: '', stage: st.stage };
+  if (state.tab === 'summary') render();
+  try {
+    const sheetSession = M.history.filter(h => h.date === TODAY).map(h => ({ activity: h.activity, km: h.km, time: h.time, hr: h.hr, rpe: h.rpe, notes: String(h.notes || '').slice(0, 300) }));
+    const ctx = aiContext({ stage: st.stage, activity: st.act ? compactActivity(st.act) : null, loggedToday: sheetSession,
+      selfEvaluation: st.stage === 'evaluated' ? { legCondition: st.note.legs || null, notes: st.note.race || null, garminRpe: st.act ? garminRpe(st.act.rpe) : null, garminFeel: st.act ? garminFeel(st.act.feel) : null } : null });
+    state.ai.data = await API.call('aiSummary', { stage: st.stage, key: st.key, context: ctx, force: !!force });
+  } catch (e) { state.ai.error = String(e && e.message || e); }
+  state.ai.loading = false;
+  if (state.tab === 'summary') render();
+}
+
+/* markdown-lite → safe HTML: paragraphs, "- " bullets, **bold** */
+function mdLite(t) {
+  const lines = esc(String(t || '')).split(/\n/);
+  let html = '', list = false;
+  lines.forEach(l => {
+    const b = l.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    if (/^\s*[-•]\s+/.test(l)) { if (!list) { html += '<ul>'; list = true; } html += `<li>${b.replace(/^\s*[-•]\s+/, '')}</li>`; }
+    else { if (list) { html += '</ul>'; list = false; } if (l.trim()) html += `<p>${b}</p>`; }
+  });
+  return html + (list ? '</ul>' : '');
+}
+
+const STAGE_LABEL = { before: 'Before training', after: 'After training', evaluated: 'After training · with your evaluation' };
+function aiCard() {
+  const A = state.ai, d = A.data;
+  if (A.error && /not set up|PASTE_YOUR|Unknown action/i.test(A.error)) {
+    return `<div class="card aicard ai-off"><div class="mono">AI coach</div><p class="desc" style="margin:4px 0 0">Not set up yet. Add AI.gs with your Claude API key in Apps Script, then deploy a new version.</p></div>`;
+  }
+  const status = d && d.status ? `<span class="aidot ai-${esc(d.status)}"></span>` : '';
+  return `<div class="card aicard" aria-live="polite">
+    <div class="ai-top"><span class="mono">AI coach · ${esc(STAGE_LABEL[A.stage] || '')}</span>
+      <button class="linkbtn" id="aiRefresh" type="button" ${A.loading ? 'disabled' : ''}>${A.loading ? 'Thinking…' : '↻'}</button></div>
+    ${A.error ? `<p class="desc warn-t">Couldn't write today's summary: ${esc(A.error)}</p>` :
+      !d ? `<div class="ai-skel"><i></i><i></i><i></i></div>` : `
+      <div class="ai-head">${status}<h3>${esc(d.headline || '')}</h3>${d.score != null ? `<span class="ai-score num">${esc(d.score)}<small>/10</small></span>` : ''}</div>
+      <ul class="ai-lines">${(d.summary || []).slice(0, 3).map(l => `<li>${esc(l)}</li>`).join('')}</ul>
+      ${d.alternative ? `<p class="ai-alt"><b>Instead:</b> ${esc(d.alternative)}</p>` : ''}
+      ${A.more ? `<div class="ai-more">${mdLite(d.details)}</div>` : ''}
+      <div class="ai-foot"><button class="linkbtn" id="aiMore" type="button">${A.more ? 'Show less' : 'Read more'}</button>
+        <span class="r-sub">${d.example ? 'Example (preview)' : `Claude ${esc(String(d.model || '').replace('claude-', ''))}`}</span></div>`}
+    <form id="askForm" class="askbox" autocomplete="off">
+      <input id="askQ" maxlength="500" placeholder="Ask Telemetry about your training…" value="${esc(state.ask.q)}">
+      <button class="btn sm" type="submit" ${state.ask.loading ? 'disabled' : ''}>${state.ask.loading ? '…' : 'Ask'}</button>
+    </form>
+    ${state.ask.error ? `<p class="desc warn-t">${esc(state.ask.error)}</p>` : ''}
+    ${state.ask.answer ? `<div class="ai-answer"><div class="mono">${esc(state.ask.q)}</div>${mdLite(state.ask.answer)}</div>` : ''}
+    <p class="desc fine" style="margin:6px 0 0">AI-written from your data. Coaching suggestions, not medical advice.</p>
+  </div>`;
+}
+
+/* weekly review: the last complete Mon–Sun week; generated only when opened */
+function weeklyFold() {
+  const wk = addDays(monday(TODAY), -7), S = state.aiWeek, d = S.key === wk ? S.data : null;
+  const body = S.loading && S.key === wk ? '<div class="card aicard"><div class="ai-skel"><i></i><i></i><i></i></div></div>'
+    : S.error && S.key === wk ? `<div class="card empty">${esc(S.error)}</div>`
+    : d ? `<div class="card aicard"><div class="ai-head"><h3>${esc(d.headline)}</h3>${d.score != null ? `<span class="ai-score num">${esc(d.score)}<small>/10</small></span>` : ''}</div>
+        <ul class="ai-lines">${(d.summary || []).map(l => `<li>${esc(l)}</li>`).join('')}</ul><div class="ai-more">${mdLite(d.details)}</div></div>`
+    : '<div class="card empty">Opening this writes the review.</div>';
+  return fold('ai-week', 'Weekly review', body, `week of ${esc(fmtShort(wk))}`);
+}
+async function loadWeekly() {
+  const wk = addDays(monday(TODAY), -7);
+  if (state.aiWeek.loading || state.aiWeek.key === wk && state.aiWeek.data) return;
+  state.aiWeek = { key: wk, loading: true, data: null, error: '' }; render();
+  try {
+    const end = addDays(wk, 6);
+    const ctx = aiContext({ reviewWeek: { start: wk, end,
+      planned: M.plan.filter(p => p.date >= wk && p.date <= end).map(p => ({ date: p.date, session: p.title, plannedKm: p.planned || null, done: p.done, actualKm: p.km || null })),
+      logged: M.history.filter(h => h.date >= wk && h.date <= end).map(h => ({ date: h.date, activity: h.activity, km: h.km, time: h.time, hr: h.hr, rpe: h.rpe })),
+      notes: M.notes.filter(n => n.date >= wk && n.date <= end).map(n => ({ date: n.date, legs: n.legs, notes: String(n.race).slice(0, 300) })) } });
+    state.aiWeek.data = await API.call('aiWeekly', { week: wk, context: ctx });
+  } catch (e) { state.aiWeek.error = String(e && e.message || e); }
+  state.aiWeek.loading = false; render();
+}
+
+/* race-week briefing: shown when a race is 7 days away or closer; generated only when opened */
+function nextRaceSoon() { return M.races.find(r => r.date && r.date >= TODAY && daysBetween(TODAY, r.date) <= 7) || null; }
+function raceFold() {
+  const r = nextRaceSoon(); if (!r) return '';
+  const S = state.aiRace, d = S.key === r.name ? S.data : null;
+  const body = S.loading ? '<div class="card aicard"><div class="ai-skel"><i></i><i></i><i></i></div></div>'
+    : S.error ? `<div class="card empty">${esc(S.error)}</div>`
+    : d ? `<div class="card aicard"><div class="ai-head"><h3>${esc(d.headline)}</h3></div><ul class="ai-lines">${(d.summary || []).map(l => `<li>${esc(l)}</li>`).join('')}</ul><div class="ai-more">${mdLite(d.details)}</div></div>`
+    : '<div class="card empty">Opening this writes the briefing.</div>';
+  return fold('ai-race', 'Race-week briefing', body, `${esc(r.name)} · ${daysBetween(TODAY, r.date)} d`);
+}
+async function loadRace() {
+  const r = nextRaceSoon(); if (!r || state.aiRace.loading || (state.aiRace.key === r.name && state.aiRace.data)) return;
+  state.aiRace = { key: r.name, loading: true, data: null, error: '' }; render();
+  try {
+    const f = r.dist ? fuelPlan(r.dist, true) : null;
+    const prs = M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec), date: p.date }));
+    const ctx = aiContext({ race: { name: r.name, date: r.date, km: r.dist, daysAway: daysBetween(TODAY, r.date), notes: r.notes, goalRace: !!r.goal },
+      planUntilRace: M.plan.filter(p => p.date >= TODAY && p.date <= r.date).map(p => ({ date: p.date, session: p.title, plannedKm: p.planned || null })),
+      personalRecords: prs, fuelPlan: f ? { estDuration: fmtMin(f.dur / 60), gels: f.gels, gelTimesMin: f.times, fluidL: f.fluidL, sodiumMg: f.sodium } : null,
+      vo2EstimateHalf: (() => { const v = lastVal(M.garminDaily, 'vo2') || M.fitness.filter(x => x.vo2).slice(-1)[0]; return v ? fmtDur(vdotTime(v.vo2, 21097.5)) : null; })() });
+    state.aiRace.data = await API.call('aiRace', { race: r.name, day: TODAY, context: ctx });
+  } catch (e) { state.aiRace.error = String(e && e.message || e); }
+  state.aiRace.loading = false; render();
 }
 
 function renderSummary() {
@@ -787,6 +998,9 @@ function renderSummary() {
     <p class="hello">${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</p>
     ${dayNote()}
     <div class="subrow"><p class="sub" style="margin:0">Week ${w.n} of ${M.weeks.length}</p><button class="linkbtn" id="garminBtn">↻ Sync Garmin</button></div>
+    ${aiCard()}
+    ${raceFold()}
+    ${weeklyFold()}
     <div class="stack">
       ${(() => { const up = races.filter(r => !r.date || r.date >= TODAY); const ni = up.findIndex(r => r.date); const nx = up[ni];
         return fold('races', 'Upcoming races', `<p class="sub" style="margin:0 0 2px">Tap a race for details.</p><div class="stack">${up.map((r, i) => raceCard(r, i === ni)).join('') || '<div class="card empty">No upcoming races in the Races tab.</div>'}</div>`,
@@ -808,6 +1022,7 @@ function renderSummary() {
         fr.length ? `latest ${esc(fmtShort(fr[fr.length - 1].date))} · ${km1(fr[fr.length - 1].km)} km` : '')}
       <p class="mono" style="text-align:center;margin:8px 0 0">Telemetry build ${APP_VERSION}</p>
     </div>`;
+  setTimeout(() => { loadAiSummary(false); if (state.open.has('ai-week')) loadWeekly(); if (state.open.has('ai-race')) loadRace(); }, 0);
 }
 
 function runRow(r) {
@@ -1067,7 +1282,7 @@ function renderCalendar() {
     weeks.unshift(...early);
   }
   const legend = [['easy', 'Easy'], ['quality', 'Quality'], ['long', 'Long'], ['strength', 'Strength'], ['cross', 'Sport'], ['rest', 'Rest / recovery'], ['race', 'Race']];
-  const status = '<span class="st"><b>✓</b> Done</span><span class="st st-short"><b>½</b> Cut short (under 80% of plan)</span><span class="st st-missed"><b>✕</b> Missed</span>';
+  const status = '<span class="st"><b>✓</b> Done</span><span class="st st-missed"><s>Easy</s> Not done</span><span class="st">8<small>/10</small> Shorter than planned</span>';
   view.innerHTML = `
     <h2 class="sec">Training calendar</h2>
     <p class="sub">Every week at a glance, in km. Tap a day to see its details.</p>
@@ -1082,10 +1297,9 @@ function renderCalendar() {
       for (let i = 0; i < 7; i++) {
         const ds = addDays(w.start, i), info = dayInfo(ds);
         const k = info.rest ? 'rest' : kindVar(info.kind);
-        tiles += `<button class="tile ${info.done ? 'done' : ''} ${info.missed ? 'missed' : ''} ${info.short ? 'short' : ''} ${ds === TODAY ? 'today' : ''} ${info.rest ? 'is-rest' : ''}" style="--k:var(--${k})" data-day="${ds}" aria-label="${esc(fmtDay(ds))}: ${esc(info.label)}${info.km ? ', ' + km1(info.km) + ' km' : ''}${info.missed ? ', missed' : info.short ? `, cut short: ${km1(info.runKm)} of ${km1(info.plannedKm)} km` : info.done ? ', done' : ''}">
-          <span class="dn">${D(ds).getDate()}${info.missed ? ' ✕' : info.short ? ' ½' : info.done ? ' ✓' : ''}</span>
-          ${info.missed ? '<span class="flag">Missed</span>' : info.short ? `<span class="flag">${km1(info.runKm)}/${km1(info.plannedKm)}</span>` : ''}
-          <span class="km num">${info.km ? km1(info.km).replace(/\.\d$/, m => info.km >= 10 ? '' : m) : ''}</span>
+        tiles += `<button class="tile ${info.done ? 'done' : ''} ${info.missed ? 'missed' : ''} ${info.short ? 'short' : ''} ${ds === TODAY ? 'today' : ''} ${info.rest ? 'is-rest' : ''}" style="--k:var(--${k})" data-day="${ds}" aria-label="${esc(fmtDay(ds))}: ${esc(info.label)}${info.km ? ', ' + km1(info.km) + ' km' : ''}${info.missed ? ', not done' : info.short ? `, ${km1(info.runKm)} of ${km1(info.plannedKm)} km planned` : info.done ? ', done' : ''}">
+          <span class="dn">${D(ds).getDate()}${info.done ? ' ✓' : ''}</span>
+          <span class="km num">${info.km ? km1(info.km).replace(/\.\d$/, m => info.km >= 10 ? '' : m) : ''}${info.short ? `<small class="of">/${km1(info.plannedKm)}</small>` : ''}</span>
           <span class="lb">${esc(info.label)}</span>
           ${info.gym && info.kind !== 'strength' ? '<i class="gymdot" title="Strength logged"></i>' : ''}
         </button>`;
@@ -1258,8 +1472,7 @@ function calorieBudget(ds) {
 
 function profileForm() {
   const P = M.profile;
-  return `<form class="card form" id="profileForm" autocomplete="off" hidden>
-    <div class="mono">Profile</div>
+  return `<form class="card form" id="profileForm" autocomplete="off">
     <div class="grid2">
       <label class="f">Height cm<input id="pHeight" class="num" inputmode="numeric" value="${esc(P.heightCm)}"></label>
       <label class="f">Target weight kg<input id="pTarget" class="num" inputmode="decimal" value="${esc(P.targetKg)}"></label>
@@ -1284,7 +1497,6 @@ function calorieCard() {
     C.goal === 'lose' ? `${toGo.toFixed(1)} kg above ${P.targetKg} kg · about ${Math.ceil(weeks)} weeks at ~0.4 kg/week` :
     C.goal === 'gain' ? `${(-toGo).toFixed(1)} kg below ${P.targetKg} kg · small surplus` : `At target ${P.targetKg} kg · maintaining`;
   return `<div class="card kcal">
-    <div class="mono">Calorie target today</div>
     <div class="carb-big num">${r10(C.target).toLocaleString()} <small>kcal</small></div>
     <div class="bar"><i style="width:${pct}%;background:${left < 0 ? 'var(--race)' : 'var(--go)'}"></i></div>
     <div class="desc num" style="display:flex;justify-content:space-between"><span>Eaten ${Math.round(C.eaten).toLocaleString()}</span><span class="${left < 0 ? 'warn-t' : 'go-t'}">${left >= 0 ? `${r10(left).toLocaleString()} left` : `${r10(-left).toLocaleString()} over`}</span></div>
@@ -1300,39 +1512,36 @@ function calorieCard() {
       <div><div class="mono">Target</div><b class="num">${P.targetKg} kg</b><small>BMI ${bmiT.toFixed(1)} at ${P.heightCm} cm</small></div>
     </div>
     <p class="desc" style="margin:4px 0 0">${esc(goalLine)}</p>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><p class="desc fine" style="margin:0">Estimates, not a prescription.</p><button class="linkbtn" id="editProfile" type="button">Edit profile</button></div>
+    <p class="desc fine" style="margin:4px 0 0">Estimates, not a prescription. Height, target weight and day start are under Profile.</p>
   </div>`;
 }
 
-function nutritionTop() {
+function weightCard() {
   const w = latestWeight();
-  const L = todayLoad(TODAY);
-  const kg = w ? w.kg : null;
-  const r5 = v => Math.round(v / 5) * 5;
   const prev = M.weights.length > 1 ? M.weights[M.weights.length - 2] : null;
   const month = w ? M.weights.filter(x => x.date >= addDays(w.date, -30))[0] : null;
   const delta = (a, b) => { const d = Math.round((a - b) * 10) / 10; return `${d > 0 ? '+' : ''}${d.toFixed(1)} kg`; };
-  return `
-    ${calorieCard()}
-    ${profileForm()}
-    <div class="card carbs">
-      <div class="mono">Carb target today</div>
-      ${kg ? `<div class="carb-big num">${r5(L.band.lo * kg)}–${r5(L.band.hi * kg)} <small>g carbs</small></div>
-        <div class="desc">${esc(L.band.name)} · ${L.band.lo}–${L.band.hi} g per kg at ${kg} kg · ${Math.round(L.band.lo * kg * 4 / calorieBudget(TODAY).target * 100)}–${Math.round(L.band.hi * kg * 4 / calorieBudget(TODAY).target * 100)}% of today's calories</div>`
-        : `<div class="pline" style="margin-top:4px">${L.band.lo}–${L.band.hi} g per kg · ${esc(L.band.name)}</div><div class="desc">Add your weight below to get grams.</div>`}
-      <ul class="load">${L.items.length ? L.items.map(i => `<li><span>${esc(i.label)}</span><span class="num">~${Math.round(i.min)} min</span></li>`).join('') : '<li><span>No training planned today</span><span></span></li>'}</ul>
-      <p class="desc" style="font-size:12.5px;margin:6px 0 0">Spread it over the day, with 1–1.5 g per kg in the meal 2–4 h before training. General guidance, not a prescription.</p>
-    </div>
-    <form class="card form" id="weightForm" autocomplete="off">
+  return `<form class="card form" id="weightForm" autocomplete="off">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
-        <div><div class="mono">Body weight</div><div class="pline num" style="font-size:24px">${w ? `${w.kg.toFixed(1)} <small>kg</small>` : '—'}</div></div>
+        <div><div class="pline num" style="font-size:24px">${w ? `${w.kg.toFixed(1)} <small>kg</small>` : '—'}</div></div>
         <div class="pside" style="text-align:right">${w ? esc(fmtShort(w.date)) : 'No entries yet'}${prev ? `<br>${delta(w.kg, prev.kg)} vs last` : ''}${month && month !== w ? ` · ${delta(w.kg, month.kg)} 30 d` : ''}</div>
       </div>
       ${weightSpark(M.weights)}
-      <div class="two"><label class="f">Weight kg<input id="wKg" class="num" inputmode="decimal" placeholder="${w ? w.kg.toFixed(1) : 'e.g. 52.4'}" required></label>
+      <div class="two"><label class="f">Weight kg<input id="wKg" class="num" inputmode="decimal" placeholder="${w ? w.kg.toFixed(1) : 'e.g. 75.6'}" required></label>
         <label class="f">Date<input id="wDate" type="date" value="${TODAY}"></label></div>
       <button class="btn" type="submit">Save weight</button>
     </form>`;
+}
+
+function carbCard() {
+  const w = latestWeight(), kg = w ? w.kg : null, L = todayLoad(TODAY), r5 = v => Math.round(v / 5) * 5;
+  return `<div class="card carbs">
+      ${kg ? `<div class="carb-big num">${r5(L.band.lo * kg)}–${r5(L.band.hi * kg)} <small>g carbs</small></div>
+        <div class="desc">${esc(L.band.name)} · ${L.band.lo}–${L.band.hi} g per kg at ${kg} kg · ${Math.round(L.band.lo * kg * 4 / calorieBudget(TODAY).target * 100)}–${Math.round(L.band.hi * kg * 4 / calorieBudget(TODAY).target * 100)}% of today's calories</div>`
+        : `<div class="pline" style="margin-top:4px">${L.band.lo}–${L.band.hi} g per kg · ${esc(L.band.name)}</div><div class="desc">Add your weight under Body weight to get grams.</div>`}
+      <ul class="load">${L.items.length ? L.items.map(i => `<li><span>${esc(i.label)}</span><span class="num">~${Math.round(i.min)} min</span></li>`).join('') : '<li><span>No training planned today</span><span></span></li>'}</ul>
+      <p class="desc" style="font-size:12.5px;margin:6px 0 0">Spread it over the day, with 1–1.5 g per kg in the meal 2–4 h before training. General guidance, not a prescription.</p>
+    </div>`;
 }
 
 /* ================= Fitness (Dashboard) ================= */
@@ -1796,28 +2005,35 @@ function renderNutrition() {
   const meals = M.meals;
   const dates = [...new Set(meals.map(m => m.date))].sort().reverse();
   const todayTotal = meals.filter(m => m.date === TODAY).reduce((s, m) => s + m.kcal, 0);
-  view.innerHTML = `
-    <h2 class="sec">Nutrition</h2>
-    <p class="sub">${esc(fmtDay(TODAY))} so far: <b class="num">${Math.round(todayTotal).toLocaleString()} kcal</b> · <span class="r-sub">day resets at ${pad(DAY_START)}:00</span></p>
-    ${dayNote()}
-    ${nutritionTop()}
-    ${(() => { const nl = M.plan.find(p => p.date >= TODAY && (p.kind === 'long' || p.kind === 'race') && !p.done && p.planned); if (!nl) return '';
-      const f = fuelPlan(nl.planned, nl.kind === 'race');
-      return `<div class="card panel" style="margin-bottom:12px"><button class="prow race-row" data-fuel="${nl.row}">
-        <div style="min-width:0"><div class="mono">Next long run fuel · ${esc(fmtDay(nl.date))}</div><div class="pline">${esc(nl.title)}, ${km1(nl.planned)} km · ~${fmtMin(f.dur / 60)}</div>
-        <div class="desc one">${f.gels ? `${f.gels} gels (${f.carbs} g carbs)` : 'No gels needed'} · ≈ ${f.fluidL} L fluid · ${f.sodium} mg sodium</div></div>
-        <span class="pside">Plan ›</span></button></div>`; })()}
-    <form class="card form" id="mealForm" autocomplete="off">
+  const P = M.profile, w = latestWeight(), C = calorieBudget(TODAY), L = todayLoad(TODAY);
+  const r10 = v => Math.round(v / 10) * 10, r5 = v => Math.round(v / 5) * 5;
+  const nl = M.plan.find(p => p.date >= TODAY && (p.kind === 'long' || p.kind === 'race') && !p.done && p.planned);
+  const fl = nl ? fuelPlan(nl.planned, nl.kind === 'race') : null;
+  const foodBody = `<form class="card form" id="mealForm" autocomplete="off">
       <div class="seg-btns" role="group" aria-label="Meal">${['Breakfast','Lunch','Dinner','Snack','Run fuel'].map(x => `<button type="button" data-meal="${x}" aria-pressed="${mealDraft.meal === x}">${x}</button>`).join('')}</div>
       <div class="two"><label class="f">Food<input id="mItem" required placeholder="e.g. Khao man gai"></label><label class="f">kcal<input id="mKcal" class="num" inputmode="numeric" required placeholder="550"></label></div>
       <div class="two"><label class="f">Date<input id="mDate" type="date" value="${mealDraft.date}"></label><div style="display:flex;align-items:flex-end"><button class="btn" style="width:100%">Add</button></div></div>
     </form>
-    <div class="stack" style="margin-top:12px">${dates.length ? dates.map(ds => {
+    <div class="stack">${dates.length ? dates.map(ds => {
       const items = meals.filter(m => m.date === ds);
       const tot = items.reduce((s, m) => s + m.kcal, 0);
       return `<div class="card dayfood"><header><h3>${ds === TODAY ? 'Today' : esc(fmtDay(ds))}</h3><span class="tot num">${Math.round(tot).toLocaleString()} <small style="font-size:13px;color:var(--ink-2);font-weight:500">kcal</small></span></header>
         ${items.map(it => `<div class="food"><span class="mono">${esc(it.meal)}</span><span style="min-width:0">${esc(it.item)}</span><span class="kc num">${Math.round(it.kcal)}</span><button class="x" data-delmeal="${esc(it.id)}" aria-label="Remove ${esc(it.item)}">×</button></div>`).join('')}</div>`;
     }).join('') : `<div class="card empty">No meals logged yet. Add your first one above; each day gets its own card with a calorie total.</div>`}</div>`;
+  const fuelBody = nl ? `<div class="card panel"><button class="prow race-row" data-fuel="${nl.row}">
+        <div style="min-width:0"><div class="mono">${esc(fmtDay(nl.date))}</div><div class="pline">${esc(nl.title)}, ${km1(nl.planned)} km · ~${fmtMin(fl.dur / 60)}</div>
+        <div class="desc one">${fl.gels ? `${fl.gels} gels (${fl.carbs} g carbs)` : 'No gels needed'} · ≈ ${fl.fluidL} L fluid · ${fl.sodium} mg sodium</div></div>
+        <span class="pside">Full plan ›</span></button></div>` : '<div class="card empty">No long run or race left in the plan.</div>';
+  view.innerHTML = `
+    <h2 class="sec">Nutrition</h2>
+    <p class="sub">${esc(fmtDay(TODAY))} so far: <b class="num">${Math.round(todayTotal).toLocaleString()} kcal</b> · <span class="r-sub">day resets at ${pad(DAY_START)}:00</span></p>
+    ${dayNote()}
+    ${fold('n-weight', 'Body weight', weightCard(), w ? `${w.kg.toFixed(1)} kg · ${esc(fmtShort(w.date))}` : 'no entries yet')}
+    ${fold('n-food', 'Food logging', foodBody, `${Math.round(todayTotal).toLocaleString()} kcal today`)}
+    ${fold('n-cal', 'Calories', calorieCard(), `${r10(C.target).toLocaleString()} target · ${C.target - C.eaten >= 0 ? `${r10(C.target - C.eaten).toLocaleString()} left` : `${r10(C.eaten - C.target).toLocaleString()} over`}`)}
+    ${fold('n-profile', 'Profile', profileForm(), `${P.heightCm} cm · target ${P.targetKg} kg`)}
+    ${fold('n-carbs', 'Carb target', carbCard(), w ? `${r5(L.band.lo * w.kg)}–${r5(L.band.hi * w.kg)} g today` : `${L.band.lo}–${L.band.hi} g/kg`)}
+    ${fold('n-fuel', 'Next long run fuel', fuelBody, nl ? `${esc(fmtShort(nl.date))} · ${km1(nl.planned)} km` : '')}`;
 }
 
 /* ================= log sheet ================= */
@@ -2024,6 +2240,8 @@ document.addEventListener('click', e => {
   if (t.dataset.strength) { openLog({ date: t.dataset.strength, activity: 'Strength: Push', type: '', title: 'Strength', run: false, preferS2: true }); return; }
   if (t.dataset.act) { loadActivity(t.dataset.act); return; }
   if (t.id === 'actReload') { state.act = null; loadActivity(state.actId); return; }
+  if (t.id === 'aiRefresh') { loadAiSummary(true); return; }
+  if (t.id === 'aiMore') { state.ai.more = !state.ai.more; render(); return; }
   if (t.id === 'editPrs') { const f = $('#prForm'); if (f) { f.hidden = !f.hidden; if (!f.hidden) $('#prTime').focus(); } return; }
   if (t.id === 'editProfile') { const f = $('#profileForm'); if (f) f.hidden = !f.hidden; return; }
   if (t.id === 'calEarlier') { state.calEarlier = !state.calEarlier; render(); return; }
@@ -2054,6 +2272,14 @@ document.addEventListener('submit', e => {
     if (p.time && p.time.split(':').length === 2) p.time = '0:' + p.time;
     closeSheet();
     run('saveSession', p, 'Saved to your sheet');
+  }
+  if (e.target.id === 'askForm') {
+    const q = $('#askQ').value.trim(); if (!q || state.ask.loading) return;
+    state.ask = { q, loading: true, answer: '', error: '' }; render();
+    API.call('aiAsk', { question: q, context: aiContext({ recentNotes: M.notes.slice(-6).map(n => ({ date: n.date, legs: n.legs, notes: String(n.race).slice(0, 200) })), personalRecords: M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec) })) }) })
+      .then(r => { state.ask.answer = r.answer; }).catch(err => { state.ask.error = String(err && err.message || err); })
+      .finally(() => { state.ask.loading = false; render(); });
+    return;
   }
   if (e.target.id === 'prForm') {
     let t = $('#prTime').value.trim();
