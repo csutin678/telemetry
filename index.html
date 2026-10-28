@@ -413,7 +413,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.28-12';
+const APP_VERSION = '2026.10.28-15';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -577,13 +577,17 @@ let RAW = null, M = null;
 const state = { tab: 'summary', week: null, calMonth: null, calSel: TODAY };
 try { const m = localStorage.getItem('telemetry.trainMode'); if (m) state.trainMode = m; } catch (e) {}
 
+// Garmin names runs after the district; show the park instead.
+const COURSE_NAMES = [[/Pathum ?Wan/gi, 'Lumphini Park'], [/Khlong ?Toei/gi, 'Benjakitti Park'], [/Chatuchak/gi, 'Suan Rod Fai']];
+const courseName = s => s ? COURSE_NAMES.reduce((t, [re, to]) => t.replace(re, to), String(s)) : s;
+
 function build(raw) {
   const c = (r, L) => r['ABCDEFGHIJKLMNOPQ'.indexOf(L) + 1] ?? '';
   const sess = (r, src) => ({
     src, row: r[0], date: c(r,'B'), activity: c(r,'C'), type: c(r,'D'),
     planned: num(c(r,'E')), km: num(c(r,'F')), time: c(r,'G'), pace: c(r,'H'), hr: num(c(r,'I')),
     rpe: c(r,'J'), sleep: c(r,'K'), load: num(c(r,'L')), shoes: c(r,'M'), strides: c(r,'O'),
-    completed: c(r,'P'), notes: c(r,'Q'), week: num(c(r,'A'))
+    completed: c(r,'P'), notes: courseName(c(r,'Q')), week: num(c(r,'A'))
   });
   const done = s => s.completed === 'Yes' || s.km > 0 || secs(s.time) > 0;
 
@@ -792,6 +796,7 @@ state.ask = { q: '', loading: false, answer: '', error: '' };
 state.aiWeek = { key: null, loading: false, data: null, error: '' };
 state.aiRace = { key: null, loading: false, data: null, error: '' };
 
+const usd = v => v < 0.01 ? `$${(+v).toFixed(4)}` : `$${(+v).toFixed(2)}`;
 const hashStr = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
 
 /** Load numbers the same way the Fitness card does. */
@@ -826,8 +831,11 @@ function compactActivity(a) {
     timerTime: fmtDur(a.timerS || a.durationS || 0), elapsed: a.elapsedS ? fmtDur(a.elapsedS) : null,
     avgPace: a.avg && a.avg.paceS ? paceStr(a.avg.paceS) : null, avgHr: a.avg ? Math.round(a.avg.hr || 0) : null, maxHr: a.maxHrFit || a.maxHR,
     workoutBlock: a.work ? { km: r1(a.work.distM / 1000), pace: paceStr(a.work.paceS), hr: Math.round(a.work.hr || 0), cadence: Math.round(a.work.cad || 0), gctMs: Math.round(a.work.gct || 0), strideM: a.work.step ? +a.work.step.toFixed(2) : null } : null,
-    phases: (a.phases || []).map(p => ({ kind: p.kind, km: r1(p.distM / 1000), time: fmtDur(p.timeS), pace: p.paceS ? paceStr(p.paceS) : null, hr: Math.round(p.hr || 0), cadence: Math.round(p.cad || 0) })),
-    splits: (a.splits || []).slice(0, 30).map(s => ({ km: s.km, time: fmtDur(s.timeS), pace: paceStr(s.timeS / (s.distM / 1000)), hr: Math.round(s.hr || 0), cad: Math.round(s.cad || 0), gct: Math.round(s.gct || 0) })),
+    phaseSource: a.phaseSource || null,
+    phaseNote: a.phases && a.phases.length > 1 ? 'Warm-up and cool-down are deliberately easy. Judge pacing, HR drift, cadence and form on the WORKOUT phase only; never call warm-up/cool-down pace, cadence or HR a fade or fatigue.' : null,
+    phases: (a.phases || []).map(p => ({ kind: p.kind, km: r1(p.distM / 1000), time: fmtDur(p.timeS), pace: p.paceS ? paceStr(p.paceS) : null, hr: Math.round(p.hr || 0), cadence: Math.round(p.cad || 0), gctMs: Math.round(p.gct || 0),
+      splitsWithinPhase: (p.splits || []).map(sp => ({ km: sp.km, partial: !!sp.partial, time: fmtDur(sp.timeS), pace: paceStr(sp.timeS / (sp.distM / 1000)), hr: Math.round(sp.hr || 0), cad: Math.round(sp.cad || 0), gct: Math.round(sp.gct || 0) })) })),
+    splits: a.phases && a.phases.length > 1 ? undefined : (a.splits || []).slice(0, 30).map(s => ({ km: s.km, time: fmtDur(s.timeS), pace: paceStr(s.timeS / (s.distM / 1000)), hr: Math.round(s.hr || 0), cad: Math.round(s.cad || 0), gct: Math.round(s.gct || 0) })),
     hrZonesMinutes: a.zones ? { z1: Math.round(a.zones.secs[1] / 60), z2: Math.round(a.zones.secs[2] / 60), z3: Math.round(a.zones.secs[3] / 60), z4: Math.round(a.zones.secs[4] / 60), z5: Math.round(a.zones.secs[5] / 60) } : null,
     runWalkMin: a.runWalkEst ? { run: Math.round(a.runWalkEst.runS / 60), walk: Math.round(a.runWalkEst.walkS / 60) } : null,
     aerobicTE: a.te, anaerobicTE: a.ate, garminLoad: a.load, gradeAdjPace: a.gapSpeed ? paceStr(1000 / a.gapSpeed) : null,
@@ -849,7 +857,7 @@ function aiContext(extra) {
     load: loadStats(),
     recentRuns: M.runs.slice(-10).map(r => ({ date: r.date, type: r.type || r.activity, km: r.km, time: r.time, pace: r.paceSec ? paceStr(r.paceSec) : null, hr: r.hr ? Math.round(r.hr) : null, rpe: r.rpe || null })),
     upcomingRaces: M.races.filter(r => r.date && r.date >= TODAY).slice(0, 4).map(r => ({ name: r.name, date: r.date, km: r.dist, daysAway: daysBetween(TODAY, r.date), goal: !!r.goal })),
-    nutritionToday: { calorieTarget: Math.round(C.target), eaten: Math.round(C.eaten), carbBandGPerKg: [L.band.lo, L.band.hi], dayType: L.band.name },
+    nutritionTargetsToday: { calorieTarget: Math.round(C.target), eatenSoFar: C.eaten > 0 ? Math.round(C.eaten) : undefined, carbBandGPerKg: [L.band.lo, L.band.hi], dayType: L.band.name },
     ...extra
   };
 }
@@ -912,7 +920,7 @@ function aiCard() {
       ${d.alternative ? `<p class="ai-alt"><b>Instead:</b> ${esc(d.alternative)}</p>` : ''}
       ${A.more ? `<div class="ai-more">${mdLite(d.details)}</div>` : ''}
       <div class="ai-foot"><button class="linkbtn" id="aiMore" type="button">${A.more ? 'Show less' : 'Read more'}</button>
-        <span class="r-sub">${d.example ? 'Example (preview)' : `Claude ${esc(String(d.model || '').replace('claude-', ''))}`}</span></div>`}
+        <span class="r-sub">${d.example ? 'Example (preview)' : `Claude ${esc(String(d.model || '').replace('claude-', ''))}${d.usage && d.usage.usd != null ? ` · ${usd(d.usage.usd)}` : ''}${d.spend ? ` · ${usd(d.spend.month)} this month` : ''}`}</span></div>`}
     <form id="askForm" class="askbox" autocomplete="off">
       <input id="askQ" maxlength="500" placeholder="Ask Telemetry about your training…" value="${esc(state.ask.q)}">
       <button class="btn sm" type="submit" ${state.ask.loading ? 'disabled' : ''}>${state.ask.loading ? '…' : 'Ask'}</button>
@@ -1735,6 +1743,8 @@ const recentRuns = a => (a && a.recent || []).filter(r => /run/i.test(r.type || 
 async function fetchActivity(id) {
   if (id && state.actCache[id]) return state.actCache[id];
   const r = await API.call('activity', id || null);
+  if (r && r.name) r.name = courseName(r.name);
+  if (r && r.recent) r.recent.forEach(x => { x.name = courseName(x.name); });
   if (r && r.id) state.actCache[r.id] = r;
   return r;
 }
@@ -2058,7 +2068,7 @@ function openLog(p) {
       <label class="f">Time h:mm:ss<input id="fTime" class="num" placeholder="0:45:00" value="${esc(p.time || '')}"></label>
       <label class="f">Avg HR<input id="fHr" class="num" inputmode="numeric" value="${p.hr ? Math.round(p.hr) : ''}"></label>
     </div>
-    <label class="f">Effort (RPE 1–10)<div class="rpe">${Array.from({ length: 10 }, (_, i) => `<button type="button" data-rpe="${i + 1}" aria-pressed="${String(i + 1) === String(p.rpe)}">${i + 1}</button>`).join('')}</div></label>
+    <label class="f">Perceived effort 1–10 <small style="font-weight:400;color:var(--ink-3)">· from Garmin when synced</small><div class="rpe">${Array.from({ length: 10 }, (_, i) => `<button type="button" data-rpe="${i + 1}" aria-pressed="${String(i + 1) === String(p.rpe)}">${i + 1}</button>`).join('')}</div></label>
     <div class="grid3">
       <label class="f">Sleep h<input id="fSleep" class="num" inputmode="decimal" value="${esc(p.sleep || '')}"></label>
       <label class="f">Strides<input id="fStrides" class="num" inputmode="numeric" value="${esc(p.strides || '')}"></label>
@@ -2145,7 +2155,7 @@ function openDetail(h) {
     <div class="desc">${esc(h.activity)}${h.kind ? ` · ${esc(KIND_LABEL[h.kind] || '')}` : ''}</div>
     ${factGrid([
       ['Distance', h.km ? `${km1(h.km)} km` : ''], ['Time', h.time], ['Pace', h.paceSec ? `${paceStr(h.paceSec)} /km` : (h.pace || '')],
-      ['Avg HR', h.hr ? `${Math.round(h.hr)} bpm` : ''], ['RPE', h.rpe ? `${h.rpe} / 10` : ''], ['Training load', h.load ? Math.round(h.load) : ''],
+      ['Avg HR', h.hr ? `${Math.round(h.hr)} bpm` : ''], ['Perceived effort', h.rpe ? `${h.rpe} / 10` : ''], ['Training load', h.load ? Math.round(h.load) : ''],
       ['Sleep', h.sleep ? `${h.sleep} h` : ''], ['Shoes', h.shoes], ['Strides', h.strides], ['Planned', h.planned ? `${km1(h.planned)} km` : '']
     ])}
     ${h.notes ? `<p class="note-full">${linkify(h.notes)}</p>` : '<p class="desc">No notes.</p>'}
@@ -2276,7 +2286,10 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'askForm') {
     const q = $('#askQ').value.trim(); if (!q || state.ask.loading) return;
     state.ask = { q, loading: true, answer: '', error: '' }; render();
-    API.call('aiAsk', { question: q, context: aiContext({ recentNotes: M.notes.slice(-6).map(n => ({ date: n.date, legs: n.legs, notes: String(n.race).slice(0, 200) })), personalRecords: M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec) })) }) })
+    const act = (state.actCache && Object.values(state.actCache).find(activityInMyDay)) || state.act || null;
+    const an = act && act.id ? (noteFor(act.id, String(act.start).slice(0, 10)) || {}) : {};
+    API.call('aiAsk', { question: q, context: aiContext({ latestActivity: act && act.id ? compactActivity(act) : null,
+      latestActivitySelfEvaluation: act && act.id ? { legCondition: an.legs || null, notes: an.race || null, garminRpe: garminRpe(act.rpe), garminFeel: garminFeel(act.feel) } : null, recentNotes: M.notes.slice(-6).map(n => ({ date: n.date, legs: n.legs, notes: String(n.race).slice(0, 200) })), personalRecords: M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec) })) }) })
       .then(r => { state.ask.answer = r.answer; }).catch(err => { state.ask.error = String(err && err.message || err); })
       .finally(() => { state.ask.loading = false; render(); });
     return;
