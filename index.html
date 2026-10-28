@@ -210,14 +210,24 @@ svg.trend{display:block;width:100%;height:34px;margin-top:8px}
 ul.load li small{font-size:12.5px;color:var(--ink-3)}
 .tablewrap{overflow-x:auto;margin-top:8px}
 table.pred,table.splits{border-collapse:collapse;width:100%;font-size:14px}
-table.pred th,table.pred td,table.splits th,table.splits td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.pred th,table.pred td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.splits th,table.splits td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;font-size:13.5px}
+table.splits thead th{font-size:10px!important;letter-spacing:.03em!important}
 table.pred th:first-child,table.splits th:first-child,table.splits td:first-child{text-align:left}
 table.pred thead th,table.splits thead th{font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 table.pred tbody th{font:700 15px var(--f-display)}
 table.pred td{font:700 16px var(--f-display)}
+.phasebar{display:flex;gap:3px;margin-top:12px;border-radius:8px;overflow:hidden;font-size:11.5px}
+.ph{min-width:72px;padding:5px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2);background:color-mix(in srgb,var(--rest) 12%,var(--card))}
+.ph b{display:block;font:700 12px var(--f-display);color:var(--ink)}
+.ph-workout{background:color-mix(in srgb,var(--quality) 14%,var(--card))}
+table.splits tr.grp td{text-align:left;padding:10px 8px 4px;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2);white-space:normal}
+table.splits tr.grp b{font:700 14px var(--f-display);color:var(--ink);margin-right:6px}
+table.splits tr.grp-workout b{color:var(--quality)}
+table.splits tr.dim td{color:var(--ink-2)}
+table.splits td.fastest{color:var(--quality);font-weight:700}
 table.splits tr.partial td{color:var(--ink-3)}
 table.splits tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--line)}
-table.splits td:nth-child(3){position:relative;min-width:84px}
 .pbar{position:absolute;left:4px;top:7px;bottom:7px;width:calc(var(--w) * .55);border-radius:4px;background:color-mix(in srgb,var(--quality) 16%,transparent);z-index:0}
 table.splits td{position:relative}
 .act-head{padding:16px 18px}
@@ -352,7 +362,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.28-1';
+const APP_VERSION = '2026.10.28-3';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -1163,10 +1173,26 @@ function fitnessSection() {
   const verdict = !sig.length ? null : flags === 0 ? ['Ready to train', 'go'] : flags === 1 ? ['Some fatigue showing', 'amber'] : ['Go easy today', 'warn'];
 
   // Training load from Garmin's per-activity load
-  const loadByDate = {}; dly.forEach(r => { if (r.load) loadByDate[r.date] = r.load; });
+  // Training load. Garmin's own acute load isn't in its API, so Telemetry rebuilds it from each
+  // activity's Garmin load: exponentially weighted like Garmin (recent days count more),
+  // acute over ~7 days and chronic over ~28 days, shown as weekly totals.
+  const loadByDate = {}; dly.forEach(r => { if (r.load != null) loadByDate[r.date] = r.load; });
   const sumLoad = (a, b) => { let s = 0; for (let d = a; d <= b; d = addDays(d, 1)) s += loadByDate[d] || 0; return s; };
-  const acute = sumLoad(addDays(TODAY, -6), TODAY), chronic = sumLoad(addDays(TODAY, -27), TODAY) / 4;
-  const ratio = chronic ? acute / chronic : null;
+  const firstLoadDay = Object.keys(loadByDate).sort()[0];
+  const baselineDays = firstLoadDay ? daysBetween(firstLoadDay, TODAY) + 1 : 0;
+  let acute = null, chronic = null, ratio = null;
+  if (baselineDays >= 28) {
+    const la = 2 / (7 + 1), lc = 2 / (28 + 1);
+    let ea = null, ec = null;
+    for (let d = firstLoadDay; d <= TODAY; d = addDays(d, 1)) {
+      const v = loadByDate[d] || 0;
+      ea = ea == null ? v : ea + la * (v - ea);
+      ec = ec == null ? v : ec + lc * (v - ec);
+    }
+    acute = ea * 7; chronic = ec * 7;
+    ratio = chronic > 0 ? acute / chronic : null;
+  }
+  const plain7 = sumLoad(addDays(TODAY, -6), TODAY);
   const band = ratio == null ? null : ratio < 0.8 ? ['Low', 'rest'] : ratio <= 1.3 ? ['Optimal', 'go'] : ratio <= 1.5 ? ['High', 'amber'] : ['Very high', 'warn'];
   const hasLoad = Object.keys(loadByDate).length > 0;
 
@@ -1197,8 +1223,11 @@ function fitnessSection() {
       <p class="desc fine">Telemetry's own check from Garmin's HRV, resting HR, Body Battery and sleep. Garmin's Training Readiness and Training Status aren't available through its API.</p>
     </div>
     <div class="card fitcard">
-      <header><div><div class="mono">Training load</div>${ratio != null ? `<div class="pline num">${Math.round(acute)} <small>7-day · ratio ${ratio.toFixed(2)}</small> <span class="chip k-${band[1] === 'go' ? 'easy' : band[1] === 'amber' ? 'long' : band[1] === 'warn' ? 'race' : 'rest'}" style="margin-left:4px">${band[0]}</span></div>` : '<div class="pline">—</div>'}</div></header>
-      ${hasLoad ? loadBars + `<p class="desc fine">Acute load is the last 7 days of Garmin's per-activity load; the ratio compares it with your 4-week weekly average (0.8–1.3 is the usual sweet spot).</p>` : waiting}
+      <header><div><div class="mono">Training load</div>${ratio != null ? `<div class="pline num">${Math.round(acute)} <small>acute · ratio ${ratio.toFixed(2)}</small> <span class="chip k-${band[1] === 'go' ? 'easy' : band[1] === 'amber' ? 'long' : band[1] === 'warn' ? 'race' : 'rest'}" style="margin-left:4px">${band[0]}</span></div>` : hasLoad ? `<div class="pline num">${Math.round(plain7)} <small>last 7 days</small></div>` : '<div class="pline">—</div>'}</div></header>
+      ${hasLoad ? loadBars : ''}
+      ${!hasLoad ? waiting : ratio != null
+        ? `<p class="desc fine">Acute ${Math.round(acute)} vs chronic ${Math.round(chronic)} (weekly, recent days weighted more, like Garmin). 0.8–1.3 is the usual sweet spot. Rebuilt from each activity's Garmin load, so expect it close to Garmin's acute load, not identical.</p>`
+        : `<p class="desc fine">Building baseline: ${baselineDays} of 28 days. The ratio appears once there are 4 weeks of load history; the next Garmin sync backfills it.</p>`}
     </div>
     <div class="card fitcard">
       <header><div class="mono">Race predictions</div></header>
@@ -1248,7 +1277,12 @@ function renderActivity() {
   const km = (a.totalDistM != null ? a.totalDistM : (a.distanceM || 0)) / 1000;
   const pace = A.paceS || (km ? timeS / km : 0), gap = a.gapSpeed ? 1000 / a.gapSpeed : 0;
   const avgHr = A.hr || a.avgHR, avgCad = A.cad || a.cadence, avgStep = A.step || (a.strideCm ? a.strideCm / 100 : null), avgGct = A.gct || a.gctMs, avgVo = A.vo || a.vertOscCm;
-  a._avg = { 1: pace, 2: avgHr, 3: avgCad, 4: avgStep, 5: avgGct };
+  // Warm-up / cool-down excluded: header pace + HR and chart averages use the workout block
+  const W = a.work && a.phases && a.phases.length > 1 ? a.work : null;
+  const wPace = W ? W.paceS : pace, wHr = W ? W.hr : avgHr;
+  a._avg = W ? { 1: W.paceS, 2: W.hr, 3: W.cad, 4: W.step, 5: W.gct } : { 1: pace, 2: avgHr, 3: avgCad, 4: avgStep, 5: avgGct };
+  a._avgLabel = W ? 'workout avg' : 'avg';
+  const when = (() => { const m = String(a.start || '').match(/(\d{4}-\d\d-\d\d)[ T](\d\d:\d\d)/); return m ? `${fmtDay(m[1])} · ${m[2]}` : esc(a.start || ''); })();
   const isRace = a.eventType === 'race' || /race/i.test(a.name || '');
   const rw = a.runWalkEst;   // same timer time as everything else on this page
   const rwTot = rw ? rw.runS + rw.walkS + rw.standS : 0;
@@ -1266,21 +1300,23 @@ function renderActivity() {
     ${opts ? `<label class="f" style="margin:0 0 10px">Older activities<select id="actPick"><option value="">Choose…</option>${opts}</select></label>` : ''}
     ${a.example ? '<div class="banner" style="margin:0 0 10px">Example data. Your real latest run appears here once the Garmin sync is set up.</div>' : ''}
     <div class="card act-head">
-      <div class="mono">${esc((a.start || '').replace(' ', ' · ').slice(0, 18))} · ${isRace ? '<span class="chip k-race" style="font-size:10.5px;padding:2px 7px">Race</span>' : a.teLabel ? 'effect: ' + esc(String(a.teLabel).toLowerCase().replace(/_/g, ' ')) : ''}</div>
+      <div class="mono">${when} · ${isRace ? '<span class="chip k-race" style="font-size:10.5px;padding:2px 7px">Race</span>' : a.teLabel ? 'effect: ' + esc(String(a.teLabel).toLowerCase().replace(/_/g, ' ')) : ''}</div>
       <h3>${esc(a.name || 'Activity')}</h3>
       <div class="act-big">
         <div><b class="num">${km1(km)}</b><small>km</small></div>
         <div><b class="num">${fmtDur(timeS)}</b><small>time${a.elapsedS && a.elapsedS - timeS > 5 ? ` · ${fmtDur(a.elapsedS)} elapsed` : ''}</small></div>
-        <div><b class="num">${pace ? paceStr(pace) : '—'}</b><small>/km</small></div>
-        <div><b class="num">${avgHr ? Math.round(avgHr) : '—'}</b><small>avg bpm</small></div>
+        <div><b class="num">${wPace ? paceStr(wPace) : '—'}</b><small>/km${W ? ' workout' : ''}</small></div>
+        <div><b class="num">${wHr ? Math.round(wHr) : '—'}</b><small>${W ? 'bpm workout' : 'avg bpm'}</small></div>
       </div>
+    ${W ? `<div class="phasebar">${a.phases.map(p => `<span class="ph ph-${p.kind}" style="flex:${p.timeS}"><b>${{ warmup: 'Warm-up', workout: 'Workout', cooldown: 'Cool-down' }[p.kind]}</b> ${km1(p.distM / 1000)} km · ${p.paceS ? paceStr(p.paceS) : '—'}</span>`).join('')}</div>
+      <p class="desc fine" style="margin:6px 2px 0">${a.phaseSource === 'workout' ? 'From your Garmin structured workout laps.' : 'Estimated from km pace: slower opening and closing kms. Run a Garmin structured workout for exact boundaries.'} Whole run: ${km1(km)} km at ${paceStr(pace)}/km, ${avgHr ? Math.round(avgHr) : '—'} bpm.</p>` : ''}
     </div>
     <div class="card chart runcharts"><h3>Over the run</h3>${runCharts(a, rw, rwTot)}</div>
     <div class="card metrics">
-      ${metric('Cadence', avgCad ? Math.round(avgCad) : '—', 'spm avg')}
-      ${metric('Stride', avgStep ? avgStep.toFixed(2) : '—', 'm avg')}
-      ${metric('GCT', avgGct ? Math.round(avgGct) : '—', 'ms' + (a.gctBalance ? ` · ${a.gctBalance.toFixed(1)}% L` : ''))}
-      ${metric('Vert. osc.', avgVo ? avgVo.toFixed(1) : '—', 'cm' + (a.vertRatio ? ` · ratio ${a.vertRatio.toFixed(1)}%` : ''))}
+      ${metric('Cadence', (W ? W.cad : avgCad) ? Math.round(W ? W.cad : avgCad) : '—', W ? 'spm workout' : 'spm avg')}
+      ${metric('Stride', (W ? W.step : avgStep) ? (W ? W.step : avgStep).toFixed(2) : '—', W ? 'm workout' : 'm avg')}
+      ${metric('GCT', (W ? W.gct : avgGct) ? Math.round(W ? W.gct : avgGct) : '—', 'ms' + (a.gctBalance ? ` · ${a.gctBalance.toFixed(1)}% L` : ''))}
+      ${metric('Vert. osc.', (W ? W.vo : avgVo) ? (W ? W.vo : avgVo).toFixed(1) : '—', 'cm' + (a.vertRatio ? ` · ratio ${a.vertRatio.toFixed(1)}%` : ''))}
       ${metric('GAP', gap ? paceStr(gap) : '—', '/km')}
       ${metric('Max HR', (a.maxHrFit || a.maxHR) ? Math.round(a.maxHrFit || a.maxHR) : '—', 'bpm' + (a.recoveryHR ? ` · recovery ${Math.round(a.recoveryHR)}` : ''))}
       ${metric('Effect', a.te ? a.te.toFixed(1) : '—', a.ate ? `anaerobic ${a.ate.toFixed(1)}` : 'aerobic')}
@@ -1293,9 +1329,16 @@ function renderActivity() {
     ${z && zTot ? `<div class="card chart"><h3>Time in heart-rate zones <small class="r-sub">· total ${fmtDur(zTot)}</small></h3>
       <div class="zones">${[5, 4, 3, 2, 1].map(i => { const v = z.secs[i], lo = z.floors[i - 1], hi = i < 5 ? z.floors[i] - 1 : z.max; return `<div class="zrow"><span class="zl">Zone ${i}<small>${['', 'Warm up', 'Easy', 'Aerobic', 'Threshold', 'Maximum'][i]} · ${lo}–${hi || ''}</small></span><span class="zbar"><i style="width:${zTot ? v / zTot * 100 : 0}%;background:${zoneColors[i]}"></i></span><span class="zv num">${fmtDur(v)}<small>${Math.round(v / zTot * 100)}%</small></span></div>`; }).join('')}${[[0, 'Below zone 1', z.secs[0]], [6, 'No HR signal', z.noHrS || 0]].filter(r => r[2] >= 1).map(([, n, v]) => `<div class="zrow"><span class="zl" style="font-size:13px;color:var(--ink-2)">${n}</span><span class="zbar"><i style="width:${v / zTot * 100}%;background:var(--ink-3)"></i></span><span class="zv num">${fmtDur(v)}<small>${Math.round(v / zTot * 100)}%</small></span></div>`).join('')}</div></div>` : ''}
     ${a.splits && a.splits.length ? `<div class="card chart"><h3>Splits</h3><div class="tablewrap"><table class="splits"><thead><tr><th>km</th><th>Time</th><th>Pace</th><th>HR</th><th>Cad</th><th>GCT</th><th>Stride</th></tr></thead><tbody>
-      ${(() => { const ps = a.splits.map(s => s.timeS / (s.distM / 1000)), fast = Math.min(...ps), slow = Math.max(...ps); return a.splits.map((s, i) => `<tr${s.partial ? ' class="partial"' : ''}><td class="num">${s.partial ? km1(s.km) : s.km}</td><td class="num">${fmtDur(s.timeS)}</td><td class="num"><span class="pbar" style="--w:${slow > fast ? 30 + 70 * (slow - ps[i]) / (slow - fast) : 100}%"></span>${paceStr(ps[i])}</td><td class="num">${s.hr ? Math.round(s.hr) : '—'}</td><td class="num">${s.cad ? Math.round(s.cad) : '—'}</td><td class="num">${s.gct ? Math.round(s.gct) : '—'}</td><td class="num">${s.step ? s.step.toFixed(2) : '—'}</td></tr>`).join(''); })()}
+      ${(() => {
+        const groups = W ? a.phases.map(p => ({ p, rows: p.splits })) : [{ p: null, rows: a.splits }];
+        const all = groups.flatMap(g => g.rows).map(r => r.timeS / (r.distM / 1000)), fast = Math.min(...all), slow = Math.max(...all);
+        const row = (r, cls) => { const ps = r.timeS / (r.distM / 1000); return `<tr class="${cls || ''}${r.partial ? ' partial' : ''}"><td class="num">${r.partial ? km1(r.km) : r.km}</td><td class="num">${fmtDur(r.timeS)}</td><td class="num${Math.abs(ps - fast) < 0.5 && !r.partial ? ' fastest' : ''}">${paceStr(ps)}</td><td class="num">${r.hr ? Math.round(r.hr) : '—'}</td><td class="num">${r.cad ? Math.round(r.cad) : '—'}</td><td class="num">${r.gct ? Math.round(r.gct) : '—'}</td><td class="num">${r.step ? r.step.toFixed(2) : '—'}</td></tr>`; };
+        return groups.map(g => !g.p ? g.rows.map(r => row(r)).join('') :
+          `<tr class="grp grp-${g.p.kind}"><td colspan="7"><b>${{ warmup: 'Warm-up', workout: 'Workout', cooldown: 'Cool-down' }[g.p.kind]}</b> <span>${km1(g.p.distM / 1000)} km · ${fmtDur(g.p.timeS)} · ${g.p.paceS ? paceStr(g.p.paceS) : '—'}/km · ${g.p.hr ? Math.round(g.p.hr) + ' bpm' : ''}</span></td></tr>` +
+          g.rows.map(r => row(r, g.p.kind === 'workout' ? '' : 'dim')).join('')).join('');
+      })()}
       </tbody><tfoot><tr><td>Total</td><td class="num">${fmtDur(a.splits.reduce((s, x) => s + x.timeS, 0))}</td><td class="num">${pace ? paceStr(pace) : '—'}</td><td class="num">${avgHr ? Math.round(avgHr) : '—'}</td><td class="num">${avgCad ? Math.round(avgCad) : '—'}</td><td class="num">${avgGct ? Math.round(avgGct) : '—'}</td><td class="num">${avgStep ? avgStep.toFixed(2) : '—'}</td></tr></tfoot></table></div>
-      <p class="desc fine">All times on this page use the watch's timer time (pauses excluded), so splits, zones and run/walk add up to the ${fmtDur(timeS)} above. Averages are time-weighted.</p></div>` : a.fitError ? `<div class="card empty">${esc(a.fitError)}</div>` : ''}`;
+      <p class="desc fine">All times use the watch's timer time (pauses excluded), so splits, zones and run/walk add up to ${fmtDur(timeS)}. Total row is the whole run; ${W ? 'header, cards and chart averages are the workout block only (time-weighted).' : 'averages are time-weighted.'}</p></div>` : a.fitError ? `<div class="card empty">${esc(a.fitError)}</div>` : ''}`;
 }
 
 /* Stacked charts over the course of a run, sharing one distance axis.
@@ -1338,6 +1381,7 @@ function runCharts(a, rw, rwTot) {
   };
   const hits = Array.from({ length: cols }, (_, i) => { const d = (i + 0.5) / cols * maxD; return `<rect class="hit" x="${L + i * colW}" y="0" width="${colW}" height="${H}" fill="transparent" data-tip="${esc(tipAt(d))}"/>`; }).join('');
 
+  const phaseSvg = (a.phases && a.phases.length > 1 ? a.phases.filter(p => p.kind !== 'workout') : []).map(p => `<rect x="${x(p.d0)}" y="0" width="${Math.max(1, x(p.d0 + p.distM) - x(p.d0))}" height="${H}" fill="var(--rest)" opacity=".10"/>`).join('');
   const kmStepC = maxD > 15000 ? 5 : maxD > 6000 ? 2 : 1;
   let xTicks = '';
   for (let k = kmStepC; k * 1000 < maxD - 300; k += kmStepC) xTicks += `<line x1="${x(k * 1000)}" x2="${x(k * 1000)}" y1="${H - 4}" y2="${H}" stroke="var(--ink-3)" stroke-width="1"/>`;
@@ -1360,9 +1404,10 @@ function runCharts(a, rw, rwTot) {
     const area = `${d}L${x(pts[pts.length - 1][0]).toFixed(1)},${H}L${x(pts[0][0]).toFixed(1)},${H}Z`;
     const fast = m.invert ? Math.min(...all) : Math.max(...all);
     return `<div class="rc">
-      <div class="rc-h"><span class="rc-n"><i style="background:${m.color}"></i>${m.name}</span><span class="num">avg <b>${m.fmt(avg)}</b> ${m.unit}<small> · ${m.invert ? 'best' : 'max'} ${m.fmt(fast)}</small></span></div>
+      <div class="rc-h"><span class="rc-n"><i style="background:${m.color}"></i>${m.name}</span><span class="num">${a._avgLabel || 'avg'} <b>${m.fmt(avg)}</b> ${m.unit}<small> · ${m.invert ? 'best' : 'max'} ${m.fmt(fast)}</small></span></div>
       <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${m.name} over the run, average ${m.fmt(avg)} ${m.unit}">
         <rect x="${L}" y="0" width="${W - L - R}" height="${H}" rx="4" fill="var(--bg)" opacity=".6"/>
+        ${phaseSvg}
         ${bandSvg}
         ${[hi - padv, (lo + hi) / 2, lo + padv].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 5}" y="${y(v) + 3.5}" text-anchor="end" font-size="9.5" fill="var(--ink-3)" font-family="var(--f-mono)">${m.fmt(v)}</text>`).join('')}
         <line x1="${L}" x2="${W - R}" y1="${y(avg)}" y2="${y(avg)}" stroke="${m.color}" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/>
@@ -1395,7 +1440,7 @@ function runCharts(a, rw, rwTot) {
         <g transform="translate(0,16)">${ticks}</g></svg>
       ${legend ? `<div class="legend" style="margin-top:2px">${legend}</div>` : ''}
     </div>
-    <p class="desc fine" style="margin-top:4px">Shaded stretches are walking or stopped. Tap any chart to read every metric at that point.</p>`;
+    <p class="desc fine" style="margin-top:4px">${a.phases && a.phases.length > 1 ? 'Grey = warm-up and cool-down; amber = walking or stopped.' : 'Shaded stretches are walking or stopped.'} Tap any chart to read every metric at that point.</p>`;
 }
 
 function actTrace(a) {
