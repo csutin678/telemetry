@@ -242,6 +242,7 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .askbox{display:flex;gap:8px;margin-top:4px}
 .askbox input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
 .ai-answer{padding:10px 12px;border-radius:10px;background:var(--bg);font-size:14px}.ai-answer p{margin:6px 0}.ai-answer ul{margin:4px 0;padding-left:18px}
+.adjnote{margin:2px 0 4px;font-size:12.5px;color:var(--race);font-weight:600}.adjnote s{color:var(--ink-3);font-weight:500}
 .planprop{margin-top:8px;padding:10px 12px;border:1.5px solid var(--quality);border-radius:10px;background:var(--card)}
 .planprop ul{margin:6px 0 8px;padding-left:18px;font-weight:600;font-size:14px}
 .planprop .acts{display:flex;gap:8px}
@@ -437,7 +438,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.29-3';
+const APP_VERSION = '2026.10.29-4';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -489,7 +490,9 @@ const Mock = (() => {
       const ex = { before: { headline: 'Ready for today\'s session, keep it controlled', status: 'go', score: null, summary: ['HRV and resting HR are in your normal range.', 'Load ratio is optimal; no reason to hold back the plan.', 'Hot evening: start 10 s/km easier and drink early.'], details: 'Example text. On the live app this is written by Claude from your HRV, sleep, Body Battery, load ratio and today\'s plan.\n- **Warm-up:** 10–15 min easy\n- **Main set:** as planned\n- **Watch:** HR drift above 170 late on', alternative: null },
         after: { headline: 'Solid HM-pace session, slight fade late', status: 'done', score: 7, summary: ['Workout block 5:42/km at 168 bpm, close to target.', 'Cadence held; GCT rose ~10 ms in the last 2 km.', 'Refuel with carbs + 25 g protein within the hour.'], details: 'Example text. On the live app Claude analyses splits, zones, cadence, GCT and run/walk for the logged run.', alternative: null },
         evaluated: { headline: 'Good work; heavy legs match the late HR drift', status: 'done', score: 7, summary: ['Your RPE 8 fits the HR and pace data.', 'Heavy legs after km 6 line up with the GCT rise.', 'Keep tomorrow easy and prioritise sleep.'], details: 'Example text using your self-evaluation alongside the data.', alternative: null } };
-      return { ...ex[p.stage], example: true, model: 'example' };
+      const lr = ((p.context.planEditing || {}).rows || []).find(r => /long/i.test(r.activity) && r.plannedKm);
+      const changes = lr ? [{ row: lr.row, activity: lr.activity, type: lr.type, plannedKm: Math.round(lr.plannedKm * 0.8), summary: `${lr.weekday} ${lr.date.slice(8)}: Long run ${lr.plannedKm} km → ${Math.round(lr.plannedKm * 0.8)} km`, reason: 'Example: a hard 10K and an HM-pace session already this week.' }] : [];
+      return { ...ex[p.stage], changes, example: true, model: 'example' };
     },
     aiAsk(p) {
       const rows = (p.context.planEditing || {}).rows || [], sport = rows.find(r => r.date > p.context.yourDay && /badminton|soccer/i.test(r.activity));
@@ -589,6 +592,7 @@ const WORKOUT_NOTES = {
   '8×400': '8 × 400 m quick and relaxed, 90 s jog recovery.',
   '8×200': '8 × 200 m fast with full recovery. Focus on form.',
   'Fartlek': 'Unstructured surges by feel inside an easy run.',
+  'Shakeout': '15–20 minutes very easy with 3–4 short, relaxed strides. Just loosening the legs for tomorrow.',
   'Half Marathon': 'Race day. Start controlled, settle into goal pace, fuel on schedule.',
   '10K Race': 'Race effort.', '5K Race': 'Race effort.'
 };
@@ -606,6 +610,66 @@ function prettyTitle(activity, type) {
 }
 
 /* ================= model ================= */
+function parseRaces(rows, raceDate) {
+  const races = (rows || []).filter(r => r[1] && !/^race$|planned races|^source/i.test(r[1])).map(r => ({
+    name: r[1], date: /^\d{4}-/.test(r[2]) ? r[2] : parseLoose(r[2]), dist: num(r[3]), status: r[4], notes: r[5]
+  })).map(r => ({ ...r, goal: r.date && r.date === raceDate }));
+  races.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
+  return races;
+}
+// race distance: the Races tab, else "10K" / "half" in the name or notes
+function raceKm(r) {
+  if (r.dist) return r.dist;
+  const t = `${r.name} ${r.notes || ''}`, m = t.match(/\b(5|10|15|21(?:\.1)?|42(?:\.2)?)\s?k\b/i);
+  if (m) return +m[1] >= 42 ? 42.2 : +m[1] >= 21 ? 21.1 : +m[1];
+  if (/half/i.test(t)) return 21.1;
+  if (/marathon/i.test(r.name)) return 42.2;
+  return null;
+}
+/* Races override the training plan:
+   race day → the race (anything else that day → rest)
+   day before → long run / quality become a 3 km shakeout; court sports become rest
+   2–3 days before → quality or long becomes an easy run
+   day after → quality or long becomes a recovery run (and 2 days after a half/full, quality → easy) */
+function applyRaceOverrides(plan, races, done) {
+  const by = d => plan.filter(p => p.date === d && !done(p));
+  const set = (p, activity, type, km, why, r) => {
+    if (p.adjust) return;
+    p.adjust = { why, race: r.name, from: `${p.title}${p.planned ? `, ${km1(p.planned)} km` : ''}` };
+    p.activity = activity; p.type = type; p.planned = km || 0;
+    p.kind = kindOf(activity, type); p.run = isRun(activity, type); p.title = prettyTitle(activity, type);
+  };
+  races.filter(r => r.date && !/cancel|withdraw|dns|not entered/i.test(r.status || '')).forEach(r => {
+    const km = raceKm(r), long = km && km > 15, day = by(r.date);
+    if (!day.length) return;   // outside the plan
+    if (!day.some(p => p.kind === 'race')) {
+      const [first, ...rest] = [...day.filter(p => p.run), ...day.filter(p => !p.run)];
+      set(first, 'Run: Race', km ? (km >= 42 ? 'Marathon' : km >= 21 ? 'Half Marathon' : `${km1(km)}K Race`) : 'Race', km, 'Race day', r);
+      first.title = r.name; first.raceName = r.name;
+      rest.forEach(p => set(p, 'Rest', '', 0, 'Race day: nothing else planned', r));
+    } else { const rr = day.find(p => p.kind === 'race'); if (rr && rr.title === 'Race day') { rr.title = r.name; rr.raceName = r.name; } }
+    by(addDays(r.date, -1)).forEach(p => {
+      if (p.kind === 'long' || p.kind === 'quality') set(p, 'Run: Shakeout', 'Shakeout', 3, 'Day before the race: a short shakeout instead', r);
+      else if (!p.run && !['rest', 'strength'].includes(p.kind)) set(p, 'Rest', '', 0, 'Day before the race: rest your legs', r);
+    });
+    [-2, -3].forEach(o => by(addDays(r.date, o)).forEach(p => { if (p.kind === 'quality' || p.kind === 'long') set(p, 'Run: Easy + optional Strides', 'Easy Run', long ? 6 : 5, 'Taper before the race', r); }));
+    by(addDays(r.date, 1)).forEach(p => { if (p.kind === 'quality' || p.kind === 'long') set(p, 'Run: Recovery', 'Recovery Run', 5, 'Recovery after the race', r); });
+    if (long) by(addDays(r.date, 2)).forEach(p => { if (p.kind === 'quality') set(p, 'Run: Easy', 'Easy Run', 6, 'Recovery after the race', r); });
+  });
+}
+// planned km for runs the sheet leaves blank: median of your last 6 weeks of that kind of run
+function estimatePlannedKm(plan, runs) {
+  const recent = runs.filter(r => r.date >= addDays(TODAY, -42));
+  const med = kind => { const v = recent.filter(r => r.kind === kind && r.km > 0).map(r => r.km).sort((a, b) => a - b); return v.length ? v[Math.floor((v.length - 1) / 2)] : null; };
+  const fallback = { easy: 6, quality: 7, long: 14, recovery: 5 };
+  const typical = { easy: med('easy') || fallback.easy, quality: med('quality') || fallback.quality };
+  plan.forEach(p => {
+    if (!p.run || p.planned || p.kind === 'rest' || p.kind === 'race') return;
+    const v = /recovery/i.test(`${p.activity} ${p.type}`) ? Math.min(typical.easy, 5) : /shakeout/i.test(p.activity) ? 3 : typical[p.kind] || fallback[p.kind] || fallback.easy;
+    p.planned = Math.round(v * 10) / 10; p.plannedEst = true;
+  });
+}
+
 let RAW = null, M = null;
 const state = { tab: 'coach', week: null, calMonth: null, calSel: TODAY };
 try { const m = localStorage.getItem('telemetry.trainMode'); if (m) state.trainMode = m; } catch (e) {}
@@ -636,6 +700,7 @@ function build(raw) {
 
   // Plan (Training Log)
   const plan = (raw.log || []).map(r => sess(r, 'log'));
+  plan.forEach(p => { p.sheetActivity = p.activity; p.sheetType = p.type; p.sheetDate = p.date; p.sheetPlanned = p.planned; });   // what the sheet row holds
   // Show the race on the Schedule's race date (display only; each row keeps its own date for logging)
   if (raceDate) {
     const raceRow = plan.find(p => /race/i.test(p.activity) && p.date !== raceDate && daysBetween(p.date, raceDate) > 0 && daysBetween(p.date, raceDate) < 7);
@@ -651,6 +716,10 @@ function build(raw) {
   (raw.sched || []).forEach(r => { if (/^\d+$/.test(String(r[1]).trim()) && r.length > 9) { schedKm[+r[1]] = num(r[9]) + num(r[10]) + num(r[11]); schedPart[+r[1]] = { easy: num(r[9]), quality: num(r[10]) }; } });
   // Easy and quality days carry their km on the Schedule tab (columns I, J), not in the log
   plan.forEach(p => { if (p.run && !p.planned && schedPart[p.week]) { const v = schedPart[p.week][p.kind]; if (v) p.planned = v; } });
+  // Races come first: race day, a short taper before it and recovery after it (display only; the sheet rows are unchanged)
+  applyRaceOverrides(plan, parseRaces(raw.races, raceDate), done);
+  // Runs without a planned distance get an estimate from your recent runs of the same kind
+  estimatePlannedKm(plan, runs);
 
   // Weeks
   const byWeek = new Map();
@@ -659,12 +728,15 @@ function build(raw) {
     rows.sort((a, b) => a.date.localeCompare(b.date) || a.row - b.row);
     const start = monday(rows.reduce((m, r) => r.date > m ? r.date : m, rows[0].date));
     const end = addDays(start, 6);
-    const sw = schedKm[n];   // Schedule tab: easy + quality + long km for the week
-    const planned = sw != null ? sw : rows.reduce((s, r) => s + r.planned, 0);
+    // weekly target = every planned run that week (easy + quality + long + race), not just the long run
+    const runRows = rows.filter(r => r.run && r.kind !== 'rest');
+    const planned = runRows.reduce((s, r) => s + (r.planned || 0), 0);
+    const longRow = runRows.filter(r => r.kind === 'long' || r.kind === 'race').sort((a, b) => (b.planned || 0) - (a.planned || 0))[0];
+    const longKm = longRow ? longRow.planned || 0 : 0, est = runRows.some(r => r.plannedEst);
     const from = rows[0].date < start ? rows[0].date : start; // a credited run before Monday still counts
     const actual = runs.filter(r => r.date >= from && r.date <= end).reduce((s, r) => s + r.km, 0);
     const countable = rows.filter(r => r.kind !== 'rest');
-    return { n, start, end, rows, planned, actual, sessions: countable.length, ticked: countable.filter(r => r.done).length };
+    return { n, start, end, rows, planned, longKm, longKind: longRow ? longRow.kind : null, est, actual, sessions: countable.length, ticked: countable.filter(r => r.done).length };
   });
   const planStart = plan.length ? plan.reduce((m, p) => p.date < m ? p.date : m, plan[0].date) : TODAY;
   const planEnd = weeks.length ? weeks[weeks.length - 1].end : TODAY;
@@ -680,10 +752,7 @@ function build(raw) {
   const current = weeks.find(w => TODAY >= w.start && TODAY <= w.end) || (TODAY < planStart ? weeks[0] : weeks[weeks.length - 1]);
 
   // Races
-  const races = (raw.races || []).filter(r => r[1] && !/^race$|planned races|^source/i.test(r[1])).map(r => ({
-    name: r[1], date: /^\d{4}-/.test(r[2]) ? r[2] : parseLoose(r[2]), dist: num(r[3]), status: r[4], notes: r[5]
-  })).map(r => ({ ...r, goal: r.date && r.date === raceDate }));
-  races.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
+  const races = parseRaces(raw.races, raceDate);
 
   // Library
   const lib = (raw.lib || []).slice(1);
@@ -880,13 +949,13 @@ function compactActivity(a) {
 function aiContext(extra) {
   const P = M.profile, w = latestWeight(), C = calorieBudget(TODAY), L = todayLoad(TODAY);
   const vo2 = lastVal(M.garminDaily, 'vo2'), fv = M.fitness.filter(f => f.vo2).slice(-1)[0], lt = M.fitness.filter(f => f.ltPace).slice(-1)[0];
-  const plan = d => M.plan.filter(p => p.date === d).map(p => ({ date: p.date, session: p.title, type: p.type || null, plannedKm: p.planned || null, done: p.done, actualKm: p.km || null }));
+  const plan = d => M.plan.filter(p => p.date === d).map(p => ({ date: p.date, session: p.title, type: p.type || null, plannedKm: p.planned || null, ...(p.plannedEst ? { kmIsEstimate: true } : {}), ...(p.adjust ? { adjustedFor: p.adjust.race, was: p.adjust.from } : {}), done: p.done, actualKm: p.km || null }));
   return {
     yourDay: TODAY, dayOfWeek: DOW[D(TODAY).getDay()], clockBangkok: (() => { const n = myDayNow(); return `${n.cal} ${pad(n.hour)}:${pad(n.minute)}`; })(),
     athlete: { heightCm: P.heightCm, weightKg: w ? w.kg : null, targetKg: P.targetKg, vo2max: vo2 ? vo2.vo2 : fv ? fv.vo2 : null, lactateThreshold: lt ? { pace: lt.ltPace, hr: lt.ltHr } : null },
     todaysTraining: L.items.map(i => ({ session: i.label, estMinutes: Math.round(i.min), done: !!i.done })),
     planNext3Days: [1, 2, 3].flatMap(k => plan(addDays(TODAY, k))),
-    week: { number: M.current.n, plannedKm: M.current.planned, doneKm: +M.current.actual.toFixed(1), sessionsTicked: `${M.current.ticked}/${M.current.sessions}` },
+    week: { number: M.current.n, plannedRunKm: +M.current.planned.toFixed(1), plannedIncludesEstimates: M.current.est, longRunKm: M.current.longKm || null, doneRunKm: +M.current.actual.toFixed(1), sessionsTicked: `${M.current.ticked}/${M.current.sessions}` },
     garminLast8Days: M.garminDaily.slice(-8).map(r => ({ date: r.date, hrv: r.hrv, hrv7: r.hrv7, hrvStatus: r.hrvStatus, hrvBaseline: r.hrvLo ? [r.hrvLo, r.hrvHi] : null, restingHr: r.rhr, restingHr7: r.rhr7, bodyBatteryWake: r.bb, stress: r.stress, sleepH: r.sleep, load: r.load })),
     load: loadStats(),
     recentRuns: M.runs.slice(-10).map(r => ({ date: r.date, type: r.type || r.activity, km: r.km, time: r.time, pace: r.paceSec ? paceStr(r.paceSec) : null, hr: r.hr ? Math.round(r.hr) : null, rpe: r.rpe || null })),
@@ -898,15 +967,22 @@ function aiContext(extra) {
 
 /** Which stage today is in, and the cache key that changes only when the stage or its inputs change. */
 async function aiStage() {
-  const items = todayLoad(TODAY).items, sheetDone = items.some(i => i.done && (i.run || i.km));
-  let act = null;
+  // "after" as soon as ANY session of your day is done: a run, tennis, badminton, strength…
+  const items = todayLoad(TODAY).items, sheetDone = items.some(i => i.done);
+  let act = null, dayActs = [];
   if (!IS_PREVIEW || window.TELEMETRY_EXAMPLE_ACTIVITY) {
-    try { act = state.actCache && Object.values(state.actCache).find(activityInMyDay) || null; if (!act) { const r = await fetchActivity(null); if (activityInMyDay(r)) act = r; } } catch (e) {}
+    try {
+      const latest = await fetchActivity(null);
+      dayActs = ((latest && latest.recent) || []).filter(x => activityInMyDay({ id: x.id, start: x.date }));
+      act = (state.actCache && Object.values(state.actCache).find(activityInMyDay)) || (activityInMyDay(latest) ? latest : null);
+      if (!act && dayActs.length) act = await fetchActivity((dayActs.find(x => /run/.test(x.type || '')) || dayActs[0]).id);
+    } catch (e) {}
   }
-  if (!act && !sheetDone) return { stage: 'before', key: `${TODAY}|before|${hashStr(JSON.stringify(M.garminDaily.slice(-2)) + items.map(i => i.label).join())}` };
+  const garminToday = dayActs.map(x => ({ name: x.name, type: x.type, start: x.date, km: x.km || null, duration: x.durS ? fmtDur(x.durS) : null }));
+  if (!act && !sheetDone && !dayActs.length) return { stage: 'before', garminToday, key: `${TODAY}|before|${hashStr(JSON.stringify(M.garminDaily.slice(-2)) + items.map(i => i.label).join())}` };
   const n = act ? (noteFor(act.id, String(act.start).slice(0, 10)) || {}) : (noteFor(null, TODAY, 'Run') || {});
   const evaluated = !!(n.legs || n.race);
-  return { stage: evaluated ? 'evaluated' : 'after', act, note: n, key: `${TODAY}|${evaluated ? 'evaluated' : 'after'}|${act ? act.id : 'sheet'}|${hashStr((n.legs || '') + (n.race || ''))}` };
+  return { stage: evaluated ? 'evaluated' : 'after', act, note: n, garminToday, key: `${TODAY}|${evaluated ? 'evaluated' : 'after'}|${act ? act.id : 'sheet'}|${dayActs.map(x => x.id).join('.')}|${hashStr((n.legs || '') + (n.race || ''))}` };
 }
 
 async function loadAiSummary(force) {
@@ -917,9 +993,11 @@ async function loadAiSummary(force) {
   if (state.tab === 'coach') render();
   try {
     const sheetSession = M.history.filter(h => h.date === TODAY).map(h => ({ activity: h.activity, km: h.km, time: h.time, hr: h.hr, rpe: h.rpe, notes: String(h.notes || '').slice(0, 300) }));
-    const ctx = aiContext({ stage: st.stage, activity: st.act ? compactActivity(st.act) : null, loggedToday: sheetSession,
+    const ctx = aiContext({ stage: st.stage, activity: st.act ? compactActivity(st.act) : null, loggedToday: sheetSession, garminActivitiesToday: st.garminToday,
+      recentSessions: recentSessions(10), planEditing: planEditingContext(),
       selfEvaluation: st.stage === 'evaluated' ? { legCondition: st.note.legs || null, notes: st.note.race || null, garminRpe: st.act ? garminRpe(st.act.rpe) : null, garminFeel: st.act ? garminFeel(st.act.feel) : null } : null });
     state.ai.data = await API.call('aiSummary', { stage: st.stage, key: st.key, context: ctx, force: !!force });
+    state.ai.changes = mapChanges(state.ai.data && state.ai.data.changes); state.ai.applyState = '';
   } catch (e) { state.ai.error = String(e && e.message || e); }
   state.ai.loading = false;
   if (state.tab === 'coach') render();
@@ -942,32 +1020,47 @@ function mdLite(t) {
 function planEditingContext() {
   const from = addDays(TODAY, -1), to = addDays(TODAY, 21);
   const rows = M.plan.filter(p => p.date >= from && p.date <= to && !p.done)
-    .map(p => ({ row: p.row, date: p.date, weekday: DOW[D(p.date).getDay()], activity: p.activity, type: p.type || '', plannedKm: p.planned || null }));
+    .map(p => ({ row: p.row, date: p.date, weekday: DOW[D(p.date).getDay()], activity: p.sheetActivity, type: p.sheetType || '', plannedKm: p.sheetPlanned || null,
+      ...(p.adjust ? { shownAs: `${p.title}${p.planned ? `, ${km1(p.planned)} km` : ''}`, adjustedBecause: `${p.adjust.why} (${p.adjust.race})` } : {}),
+      ...(p.plannedEst ? { estimatedKm: p.planned } : {}) }));
   const names = [...new Set(M.plan.map(p => p.activity + (p.type ? ` | type: ${p.type}` : '')))].slice(0, 40);
   const dates = {}; for (let i = -1; i <= 7; i++) { const d = addDays(TODAY, i); dates[i === -1 ? 'yesterday' : i === 0 ? 'today' : i === 1 ? 'tomorrow' : DOW[D(d).getDay()]] = `${d} (${DOW[D(d).getDay()]})`; }
   return { note: 'Training happens in the evening, so a session belongs to its calendar date. "today" is the athlete\'s current day.', dates, rows, activityNames: names };
 }
-function planProposal() {
-  const P = state.ask.changes || [];
+// keep only changes to rows we offered, and remember what each row held so the sheet can check it hasn't moved on
+function mapChanges(list) {
+  const already = (c, p) => (!c.activity || c.activity === p.sheetActivity) && (!c.date || c.date === p.sheetDate) && (c.plannedKm === undefined || +(c.plannedKm || 0) === +(p.sheetPlanned || 0));
+  return (list || []).map(c => { const p = M.plan.find(x => x.row === +c.row && !x.done); return p && !already(c, p) ? { ...c, row: p.row, expectDate: p.sheetDate, expectActivity: p.sheetActivity } : null; }).filter(Boolean);
+}
+// everything done in the last n days, all sports, for workload-aware coaching
+function recentSessions(n) {
+  const from = addDays(TODAY, -n);
+  return M.history.filter(h => h.date >= from && h.date <= addDays(TODAY, 1)).map(h => ({ date: h.date, weekday: DOW[D(h.date).getDay()], activity: h.activity, type: h.type || null,
+    km: h.km || null, time: h.time || null, hr: h.hr ? Math.round(h.hr) : null, rpe: h.rpe || null, load: h.load || null }));
+}
+function planProposal(src) {
+  src = src || state.ask;
+  const P = src.changes || [];
   if (!P.length) return '';
-  const S = state.ask.applyState || '';
+  const S = src.applyState || '', who = src === state.ask ? 'ask' : 'ai';
   return `<div class="planprop ${S === 'done' ? 'applied' : ''}">
-    <div class="mono">${S === 'done' ? 'Plan updated' : 'Proposed plan change'}</div>
-    <ul>${P.map(c => `<li>${esc(c.summary || `${fmtDay(c.date || c.expectDate)}: ${c.activity || ''}`)}</li>`).join('')}</ul>
-    ${S === 'done' ? (state.ask.skipped && state.ask.skipped.length ? `<p class="desc warn-t" style="margin:0">Not changed: ${esc(state.ask.skipped.join('; '))}</p>` : '')
-      : S === 'cancelled' ? '<p class="desc" style="margin:0">Cancelled. Nothing changed.</p>'
-      : `<div class="acts"><button class="btn sm" id="planApply" type="button" ${S === 'busy' ? 'disabled' : ''}>${S === 'busy' ? 'Applying…' : 'Apply'}</button><button class="linkbtn" id="planCancel" type="button">Cancel</button></div>`}
+    <div class="mono">${S === 'done' ? 'Plan updated' : who === 'ai' ? 'Suggested plan change' : 'Proposed plan change'}</div>
+    <ul>${P.map(c => `<li>${esc(c.summary || `${fmtDay(c.date || c.expectDate)}: ${c.activity || ''}`)}${c.reason ? `<br><small class="r-sub" style="font-weight:400">${esc(c.reason)}</small>` : ''}</li>`).join('')}</ul>
+    ${S === 'done' ? (src.skipped && src.skipped.length ? `<p class="desc warn-t" style="margin:0">Not changed: ${esc(src.skipped.join('; '))}</p>` : '')
+      : S === 'cancelled' ? '<p class="desc" style="margin:0">Dismissed. Nothing changed.</p>'
+      : `<div class="acts"><button class="btn sm" data-plan-apply="${who}" type="button" ${S === 'busy' ? 'disabled' : ''}>${S === 'busy' ? 'Applying…' : 'Apply'}</button><button class="linkbtn" data-plan-cancel="${who}" type="button">${who === 'ai' ? 'Not now' : 'Cancel'}</button></div>`}
   </div>`;
 }
-async function applyPlanChanges() {
-  const P = state.ask.changes || []; if (!P.length) return;
-  state.ask.applyState = 'busy'; render();
+async function applyPlanChanges(who) {
+  const src = who === 'ai' ? state.ai : state.ask;
+  const P = src.changes || []; if (!P.length) return;
+  src.applyState = 'busy'; render();
   try {
     const res = await API.call('updatePlan', { changes: P.map(c => ({ row: c.row, expectDate: c.expectDate, expectActivity: c.expectActivity, date: c.date, activity: c.activity, type: c.type, plannedKm: c.plannedKm })) });
     if (res && res.data) { RAW = res.data; M = build(RAW); }
-    state.ask.applyState = 'done'; state.ask.skipped = res && res.skipped || [];
-    toast(state.ask.skipped.length ? 'Some changes were skipped' : 'Plan updated');
-  } catch (e) { state.ask.applyState = ''; toast('Could not update the plan: ' + (e && e.message ? e.message : e)); }
+    src.applyState = 'done'; src.skipped = res && res.skipped || [];
+    toast(src.skipped.length ? 'Some changes were skipped' : 'Plan updated');
+  } catch (e) { src.applyState = ''; toast('Could not update the plan: ' + (e && e.message ? e.message : e)); }
   render();
 }
 
@@ -986,6 +1079,7 @@ function aiCard() {
       <div class="ai-head">${status}<h3>${esc(d.headline || '')}</h3>${d.score != null ? `<span class="ai-score num">${esc(d.score)}<small>/10</small></span>` : ''}</div>
       <ul class="ai-lines">${(d.summary || []).slice(0, 3).map(l => `<li>${esc(l)}</li>`).join('')}</ul>
       ${d.alternative ? `<p class="ai-alt"><b>Instead:</b> ${esc(d.alternative)}</p>` : ''}
+      ${planProposal(state.ai)}
       ${A.more ? `<div class="ai-more">${mdLite(d.details)}</div>` : ''}
       <div class="ai-foot"><button class="linkbtn" id="aiMore" type="button">${A.more ? 'Show less' : 'Read more'}</button></div>`}
     <form id="askForm" class="askbox" autocomplete="off">
@@ -1043,9 +1137,9 @@ async function loadRace() {
     const f = r.dist ? fuelPlan(r.dist, true) : null;
     const prs = M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec), date: p.date }));
     const ctx = aiContext({ race: { name: r.name, date: r.date, km: r.dist, daysAway: daysBetween(TODAY, r.date), notes: r.notes, goalRace: !!r.goal },
-      planUntilRace: M.plan.filter(p => p.date >= TODAY && p.date <= r.date).map(p => ({ date: p.date, session: p.title, plannedKm: p.planned || null })),
+      planUntilRace: M.plan.filter(p => p.date >= TODAY && p.date <= r.date).map(p => ({ date: p.date, session: p.title, plannedKm: p.planned || null, ...(p.adjust ? { adjustedFor: p.adjust.race, was: p.adjust.from } : {}) })),
       personalRecords: prs, fuelPlan: f ? { estDuration: fmtMin(f.dur / 60), gels: f.gels, gelTimesMin: f.times, fluidL: f.fluidL, sodiumMg: f.sodium } : null,
-      vo2EstimateHalf: (() => { const v = lastVal(M.garminDaily, 'vo2') || M.fitness.filter(x => x.vo2).slice(-1)[0]; return v ? fmtDur(vdotTime(v.vo2, 21097.5)) : null; })() });
+      racePredictions: racePredictionsForAi(), recentSessions: recentSessions(14) });
     state.aiRace.data = await API.call('aiRace', { race: r.name, day: TODAY, context: ctx });
   } catch (e) { state.aiRace.error = String(e && e.message || e); }
   state.aiRace.loading = false; render();
@@ -1222,14 +1316,15 @@ function todayPanel() {
   return `<div class="card panel">
     ${today.filter(t => t.kind !== 'rest' || today.length === 1).map(t => `<div class="prow ${t.date === TODAY && !t.done && t.kind !== 'rest' ? 'glow' : ''}">
       <div style="min-width:0"><div class="mono">Today${t.done ? ' · done' : ''}</div><h3 class="${t.done ? 'struck' : ''}">${esc(t.title)}</h3>
-      <div class="desc one ${t.done ? 'struck' : ''}">${esc(t.planned ? `${KIND_LABEL[t.kind]}, ${km1(t.planned)} km planned` : (t.kind === 'rest' ? 'Recovery day' : KIND_LABEL[t.kind]))}</div></div>
+      <div class="desc one ${t.done ? 'struck' : ''}">${esc(t.planned ? `${KIND_LABEL[t.kind]}, ${t.plannedEst ? '~' : ''}${km1(t.planned)} km planned` : (t.kind === 'rest' ? 'Recovery day' : KIND_LABEL[t.kind]))}</div></div>
       ${t.kind === 'rest' ? '' : `<button class="btn sm ${t.done ? 'ghost' : ''}" data-log="${t.row}">${t.done ? 'Edit' : 'Log it'}</button>`}
     </div>`).join('') || '<div class="prow"><div><div class="mono">Today</div><h3>Nothing planned</h3></div></div>'}
     ${nextRun ? `<div class="prow"><div style="min-width:0"><div class="mono">Next run</div><div class="pline">${esc(nextRun.title)}</div></div><span class="pside">${esc(fmtDay(nextRun.date))}</span></div>` : ''}
     <div class="prow" style="display:block">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><div class="mono">This week</div><span class="pside">${w.ticked}/${w.sessions} sessions · gym ${gym}/${STRENGTH_TARGET}</span></div>
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:2px"><div class="pline num">${km1(w.actual)} <small>/ ${km1(w.planned)} km</small></div><span class="pside num ${weekLeft > 0 ? 'warn-t' : 'go-t'}">${weekLeft > 0 ? `${km1(weekLeft)} km to go` : 'Target met'}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:2px"><div class="pline num">${km1(w.actual)} <small>/ ${w.est ? '~' : ''}${km1(w.planned)} km running</small></div><span class="pside num ${weekLeft > 0 ? 'warn-t' : 'go-t'}">${weekLeft > 0 ? `${km1(weekLeft)} km to go` : 'Target met'}</span></div>
       <div class="bar thin"><i style="width:${pct}%"></i></div>
+      ${w.longKm ? `<p class="desc fine" style="margin:4px 0 0">Includes the ${w.longKind === 'race' ? 'race' : 'long run'}, ${km1(w.longKm)} km${w.est ? ' · easy and quality km estimated from your recent runs' : ''}</p>` : ''}
     </div>
   </div>`;
 }
@@ -1255,14 +1350,14 @@ function weekView() {
   return `
     <h2 class="sec">Week by week</h2>
     <p class="sub">Tap the circle when a session is done.</p>
-    <div class="pills" id="pills">${weeks.map(x => `<button class="pill num" data-week="${x.n}" aria-pressed="${x.n === w.n}"${x === M.current ? ' data-now="1"' : ''}>${fmtShort(x.start)}, ${km1(x.planned)} km${x === M.current ? ' <span class="nowtag">This week</span>' : ''}</button>`).join('')}</div>
+    <div class="pills" id="pills">${weeks.map(x => `<button class="pill num" data-week="${x.n}" aria-pressed="${x.n === w.n}"${x === M.current ? ' data-now="1"' : ''}>${fmtShort(x.start)}, ${x.est ? '~' : ''}${km1(x.planned)} km${x === M.current ? ' <span class="nowtag">This week</span>' : ''}</button>`).join('')}</div>
     <div class="card weekcard" style="margin-top:12px">
       <div class="wk-top">
         <div><div class="big num">${km1(w.actual)}</div><div class="desc">km done this week</div></div>
         <div style="text-align:right"><div class="big num ${left > 0 ? 'warn' : 'go'}">${km1(left)}</div><div class="desc">km to go</div></div>
       </div>
       <div class="bar"><i style="width:${pct}%"></i></div>
-      <p class="wk-note">Week ${w.n}: planned ${km1(w.planned)} km, ${w.ticked} of ${w.sessions} sessions ticked.<br>Whole block: ${km1(block.actual)} of ${km1(block.planned)} km, ${km1(Math.max(0, block.planned - block.actual))} km left to collect.</p>
+      <p class="wk-note">Week ${w.n}: ${w.est ? 'about ' : ''}${km1(w.planned)} km of running planned${w.longKm ? ` (${w.longKind === 'race' ? 'race' : 'long run'} ${km1(w.longKm)} km)` : ''}, ${w.ticked} of ${w.sessions} sessions ticked.${w.est ? ' Easy and quality runs without a set distance use your recent typical km.' : ''}<br>Whole block: ${km1(block.actual)} of ${km1(block.planned)} km, ${km1(Math.max(0, block.planned - block.actual))} km left to collect.</p>
     </div>
     <div class="card days">${w.rows.map((r, i) => dayRow(r) + (w.rows[i + 1] && w.rows[i + 1].date === r.date ? '' : strengthSlot(r.date))).join('')}</div>`;
 }
@@ -1316,12 +1411,13 @@ function dayRow(p) {
   const d = D(p.date);
   const isToday = p.date === TODAY;
   const desc = p.run ? (WORKOUT_NOTES[p.type] || '') : (CROSS_NOTES[p.activity] || '');
-  const chipTxt = `${isToday ? 'Today' : KIND_LABEL[p.kind]}${p.planned ? `, ${km1(p.planned)} km` : ''}`;
+  const chipTxt = `${isToday ? 'Today' : KIND_LABEL[p.kind]}${p.planned ? `, ${p.plannedEst ? '~' : ''}${km1(p.planned)} km` : ''}`;
   const rest = p.kind === 'rest';
   return `<div class="day ${p.done ? 'is-done' : ''} ${isToday ? 'is-today' : ''} ${rest ? 'is-rest' : ''}">
     <div><div class="dnum">${d.getDate()}</div><div class="dname">${DOW[d.getDay()]}<br>${MON[d.getMonth()]}</div></div>
     <div style="min-width:0">
       <h3>${esc(p.title)}</h3>
+      ${p.adjust ? `<p class="adjnote">${esc(p.adjust.why)} · ${esc(p.adjust.race)}<br><s>${esc(p.adjust.from)}</s></p>` : ''}
       ${desc ? `<p class="desc">${esc(desc)}</p>` : ''}
       ${rest ? '' : `<div class="chips"><span class="chip k-${p.kind}">${esc(chipTxt)}</span>
         ${p.run ? `<label class="actual">Actual <input class="num" inputmode="decimal" data-km="${p.row}" value="${p.km ? km1(p.km) : ''}" placeholder="${p.planned ? km1(p.planned) : '–'}" aria-label="Actual km for ${esc(fmtDay(p.date))}"> km</label>` :
@@ -1634,6 +1730,34 @@ function carbCard() {
 /* ================= Fitness (Dashboard) ================= */
 function lastVal(arr, key) { for (let i = arr.length - 1; i >= 0; i--) if (arr[i][key] != null && arr[i][key] !== '') return arr[i]; return null; }
 
+/* Race predictions from your actual performances (not VO2 max).
+   Reference = your result at the closest distance (whole races preferred over best efforts inside a run, last 12 months).
+   Time = ref × (d / ref distance)^k, k = 1.06 (Riegel); the range goes to 1.09 when predicting longer than you've raced. */
+function racePredictions() {
+  const cut = addDays(TODAY, -365);
+  const refs = [
+    ...M.runs.filter(r => r.kind === 'race' && r.km >= 3 && secs(r.time) > 0 && r.date >= cut).map(r => ({ m: r.km * 1000, t: secs(r.time), date: r.date, race: true, label: `${km1(r.km)} km race` })),
+    ...M.prs.filter(p => p.sec > 0 && (!p.date || !/^\d{4}-/.test(p.date) || p.date >= cut)).map(p => ({ m: { '5K': 5000, '10K': 10000, 'Half': 21097.5, 'Marathon': 42195 }[p.dist], t: p.sec, date: p.date, race: false, label: `${p.dist} PR` })).filter(r => r.m)
+  ];
+  if (!refs.length) return null;
+  return [5000, 10000, 21097.5, 42195].map(d => {
+    // closest distance first; among results at about that distance, whole races beat best efforts, then the fastest
+    const gap = x => Math.abs(Math.log(d / x.m)), minGap = Math.min(...refs.map(gap));
+    let near = refs.filter(x => gap(x) <= minGap + 0.1);
+    if (near.some(x => x.race)) near = near.filter(x => x.race);
+    const r = near.sort((a, b) => a.t * Math.pow(d / a.m, 1.06) - b.t * Math.pow(d / b.m, 1.06))[0];
+    const ratio = d / r.m;
+    if (Math.abs(Math.log(ratio)) < 0.03) return { t: r.t, lo: r.t, hi: r.t, basis: `your ${r.label}${r.date && /^\d{4}-/.test(r.date) ? `, ${fmtShort(r.date)}` : ''}` };
+    const k = ratio > 1 && d > 30000 && r.m < 15000 ? 1.08 : 1.06;
+    const t = r.t * Math.pow(ratio, k), alt = r.t * Math.pow(ratio, ratio > 1 ? 1.09 : 1.03);
+    return { t, lo: Math.min(t, alt), hi: Math.max(t, alt), basis: `from your ${r.label}${r.date && /^\d{4}-/.test(r.date) ? `, ${fmtShort(r.date)}` : ''}` };
+  });
+}
+function racePredictionsForAi() {
+  const p = racePredictions(); if (!p) return null;
+  return ['5K', '10K', 'Half', 'Marathon'].reduce((o, n, i) => { o[n] = { estimate: fmtDur(p[i].t), range: `${fmtDur(p[i].lo)}–${fmtDur(p[i].hi)}`, basis: p[i].basis }; return o; }, { note: 'Scaled from the athlete\'s own results (Riegel). Good conditions; Bangkok heat adds time.' });
+}
+
 /* Daniels' VO2 cost and %VO2max curves: time (min) to run d metres at a given VDOT. */
 function vdotTime(vdot, d) {
   const need = t => { const v = d / t; const vo2 = -4.6 + 0.182258 * v + 0.000104 * v * v; const pct = 0.8 + 0.1894393 * Math.exp(-0.012778 * t) + 0.2989558 * Math.exp(-0.1932605 * t); return vo2 / pct; };
@@ -1749,7 +1873,7 @@ function fitnessSection() {
     return [...fromTab, ...fromRuns].sort((a, b) => a.t - b.t)[0] || null;
   });
   const hasPr = prs.some(Boolean);
-  const fromVo2 = vo2 ? dists.map(([, m]) => vdotTime(vo2.v, m)) : null;
+  const pred = racePredictions();
 
   // Weekly load (Mon–Sun), last 6 weeks, each bar labelled. Benchmark: your own optimal band,
   // 0.8–1.3 × your chronic weekly load — the same ratio Garmin's acute-load gauge is built on.
@@ -1794,9 +1918,9 @@ function fitnessSection() {
     </div>
     <div class="card fitcard">
       <header><div class="mono">Race predictions</div></header>
-      <div class="tablewrap"><table class="pred"><thead><tr><th></th>${fromVo2 ? `<th>Estimate<br><small>VO2 max ${vo2.v}</small></th>` : ''}<th>My PRs</th></tr></thead>
-      <tbody>${dists.map(([n], i) => `<tr><th>${n}</th>${fromVo2 ? `<td class="num">${fmtDur(fromVo2[i])}</td>` : ''}<td class="num">${prs[i] ? `${fmtDur(prs[i].t)}<small class="prdate">${prs[i].date && /^\d{4}-/.test(prs[i].date) ? `${esc(fmtShort(prs[i].date))} ${D(prs[i].date).getFullYear()} · ` : ''}${esc(prs[i].src)}</small>` : '<span class="r-sub">—</span>'}</td></tr>`).join('')}</tbody></table></div>
-      <p class="desc fine">Garmin's race predictor isn't available through its API, so the estimate is Telemetry's, from your VO2 max (Daniels' VDOT tables). Heat and humidity in Bangkok usually make real times slower than the estimate. PRs are your fastest Garmin best effort at each distance (the quickest stretch of that distance inside any run), updated on every sync.</p>
+      <div class="tablewrap"><table class="pred"><thead><tr><th></th>${pred ? `<th>Estimate<br><small>from your results</small></th>` : ''}<th>My PRs</th></tr></thead>
+      <tbody>${dists.map(([n], i) => `<tr><th>${n}</th>${pred ? `<td class="num">${pred[i] ? `${fmtDur(pred[i].t)}${pred[i].hi - pred[i].lo > 20 ? `<small class="prdate">${fmtDur(pred[i].lo)}–${fmtDur(pred[i].hi)}</small>` : ''}<small class="prdate">${esc(pred[i].basis)}</small>` : '—'}</td>` : ''}<td class="num">${prs[i] ? `${fmtDur(prs[i].t)}<small class="prdate">${prs[i].date && /^\d{4}-/.test(prs[i].date) ? `${esc(fmtShort(prs[i].date))} ${D(prs[i].date).getFullYear()} · ` : ''}${esc(prs[i].src)}</small>` : '<span class="r-sub">—</span>'}</td></tr>`).join('')}</tbody></table></div>
+      <p class="desc fine">Estimates come from your own results, not VO2 max: each distance is scaled from your closest-distance race or PR (preferring whole races), with a fatigue factor for going longer (Riegel, exponent 1.06; the range runs to 1.09 because your endurance at the longer distance is unproven). They assume good conditions. Bangkok heat and humidity usually add time. PRs are your fastest Garmin best effort at each distance, updated on every sync.</p>
     </div></div>`;
 }
 
@@ -2339,8 +2463,8 @@ document.addEventListener('click', e => {
   if (t.dataset.act) { loadActivity(t.dataset.act); return; }
   if (t.id === 'actReload') { state.act = null; loadActivity(state.actId); return; }
   if (t.id === 'aiRefresh') { loadAiSummary(true); return; }
-  if (t.id === 'planApply') { applyPlanChanges(); return; }
-  if (t.id === 'planCancel') { state.ask.applyState = 'cancelled'; render(); return; }
+  if (t.dataset.planApply) { applyPlanChanges(t.dataset.planApply); return; }
+  if (t.dataset.planCancel) { (t.dataset.planCancel === 'ai' ? state.ai : state.ask).applyState = 'cancelled'; render(); return; }
   if (t.id === 'aiMore') { state.ai.more = !state.ai.more; render(); return; }
   if (t.id === 'editProfile') { const f = $('#profileForm'); if (f) f.hidden = !f.hidden; return; }
   if (t.id === 'calEarlier') { state.calEarlier = !state.calEarlier; render(); return; }
@@ -2379,11 +2503,11 @@ document.addEventListener('submit', e => {
     const act = (state.actCache && Object.values(state.actCache).find(activityInMyDay)) || state.act || null;
     const an = act && act.id ? (noteFor(act.id, String(act.start).slice(0, 10)) || {}) : {};
     API.call('aiAsk', { question: q, context: aiContext({ latestActivity: act && act.id ? compactActivity(act) : null,
-      latestActivitySelfEvaluation: act && act.id ? { legCondition: an.legs || null, notes: an.race || null, garminRpe: garminRpe(act.rpe), garminFeel: garminFeel(act.feel) } : null, recentNotes: M.notes.slice(-6).map(n => ({ date: n.date, legs: n.legs, notes: String(n.race).slice(0, 200) })), personalRecords: M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec) })), planEditing: planEditingContext() }) })
+      latestActivitySelfEvaluation: act && act.id ? { legCondition: an.legs || null, notes: an.race || null, garminRpe: garminRpe(act.rpe), garminFeel: garminFeel(act.feel) } : null, recentNotes: M.notes.slice(-6).map(n => ({ date: n.date, legs: n.legs, notes: String(n.race).slice(0, 200) })), personalRecords: M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec) })), racePredictions: racePredictionsForAi(), recentSessions: recentSessions(10), planEditing: planEditingContext() }) })
       .then(r => {
         state.ask.answer = r.answer;
         // keep only changes to rows we offered, and remember what each row held so the sheet can check it hasn't moved on
-        state.ask.changes = (r.changes || []).map(c => { const p = M.plan.find(x => x.row === +c.row && !x.done); return p ? { ...c, row: p.row, expectDate: p.date, expectActivity: p.activity } : null; }).filter(Boolean);
+        state.ask.changes = mapChanges(r.changes);
       }).catch(err => { state.ask.error = String(err && err.message || err); })
       .finally(() => { state.ask.loading = false; render(); });
     return;
