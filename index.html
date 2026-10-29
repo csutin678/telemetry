@@ -438,7 +438,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.29-4';
+const APP_VERSION = '2026.10.29-5';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -994,7 +994,7 @@ async function loadAiSummary(force) {
   try {
     const sheetSession = M.history.filter(h => h.date === TODAY).map(h => ({ activity: h.activity, km: h.km, time: h.time, hr: h.hr, rpe: h.rpe, notes: String(h.notes || '').slice(0, 300) }));
     const ctx = aiContext({ stage: st.stage, activity: st.act ? compactActivity(st.act) : null, loggedToday: sheetSession, garminActivitiesToday: st.garminToday,
-      recentSessions: recentSessions(10), planEditing: planEditingContext(),
+      recentSessions: recentSessions(10), hardEffortsLast7Days: hardEffortsLast7(), planEditing: planEditingContext(),
       selfEvaluation: st.stage === 'evaluated' ? { legCondition: st.note.legs || null, notes: st.note.race || null, garminRpe: st.act ? garminRpe(st.act.rpe) : null, garminFeel: st.act ? garminFeel(st.act.feel) : null } : null });
     state.ai.data = await API.call('aiSummary', { stage: st.stage, key: st.key, context: ctx, force: !!force });
     state.ai.changes = mapChanges(state.ai.data && state.ai.data.changes); state.ai.applyState = '';
@@ -1031,6 +1031,12 @@ function planEditingContext() {
 function mapChanges(list) {
   const already = (c, p) => (!c.activity || c.activity === p.sheetActivity) && (!c.date || c.date === p.sheetDate) && (c.plannedKm === undefined || +(c.plannedKm || 0) === +(p.sheetPlanned || 0));
   return (list || []).map(c => { const p = M.plan.find(x => x.row === +c.row && !x.done); return p && !already(c, p) ? { ...c, row: p.row, expectDate: p.sheetDate, expectActivity: p.sheetActivity } : null; }).filter(Boolean);
+}
+// the demanding sessions in the last 7 days (races, quality, long runs, long court sessions), oldest first
+function hardEffortsLast7() {
+  const from = addDays(TODAY, -6);
+  return M.history.filter(h => h.date >= from && h.date <= TODAY && (['race', 'quality', 'long'].includes(h.kind) || (h.kind === 'cross' && secs(h.time) >= 3000) || +h.rpe >= 7))
+    .map(h => ({ date: h.date, weekday: DOW[D(h.date).getDay()], session: h.type || h.activity, km: h.km || null, time: h.time || null, hr: h.hr ? Math.round(h.hr) : null, rpe: h.rpe || null }));
 }
 // everything done in the last n days, all sports, for workload-aware coaching
 function recentSessions(n) {
@@ -1575,7 +1581,10 @@ function todayLoad(ds) {
     items.push({ label: h.kind === 'strength' ? h.activity : (h.type || h.activity), min: secs(h.time) / 60 || (h.kind === 'strength' ? 45 : 60), km: h.km, run: h.run, done: true, met: h.kind === 'strength' ? 'strength' : 'sport', hard: h.kind === 'quality' || h.kind === 'cross' });
   });
   const minutes = items.reduce((s, i) => s + i.min, 0);
-  const score = minutes + (items.some(i => i.hard) ? 20 : 0);
+  // fuel demand, not raw minutes: running counts fully, court sports a bit less, lifting much less
+  // (96 min of push day at avg HR 113 is not a long run); only quality/race runs add the hard-session bonus
+  const weight = i => i.run ? 1 : i.met === 'strength' ? 0.35 : 0.75;
+  const score = items.reduce((s, i) => s + i.min * weight(i), 0) + (items.some(i => i.run && i.hard) ? 20 : 0);
   let band;
   if (items.some(i => i.race) || items.some(i => i.long && i.min >= 110) || score >= 150) band = { name: 'Long run or race day', lo: 8, hi: 10 };
   else if (score >= 90) band = { name: 'Hard training day', lo: 6, hi: 8 };
