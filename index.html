@@ -50,6 +50,19 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .sync.busy i{background:var(--race);animation:pulse 1s infinite}
 .sync.err i{background:var(--warn)}
 @keyframes pulse{50%{opacity:.3}}
+.sp{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;transition:opacity .45s ease}
+.sp > div{grid-area:1/1;display:grid;justify-items:center;gap:14px;transition:opacity .5s ease,transform .5s ease}
+.sp-logo img{width:104px;height:104px;border-radius:24px;box-shadow:0 10px 30px rgba(19,26,51,.18)}
+.sp-logo b{font:800 26px/1 var(--f-display);letter-spacing:-.01em;color:var(--ink)}
+.sp-logo b span{color:#E8735A}
+.sp-load{opacity:0;transform:translateY(6px)}
+.sp-load i{width:38px;height:38px;border-radius:50%;border:3.5px solid var(--line);border-top-color:#E8735A;animation:spin .85s linear infinite}
+.sp-load p{margin:0;font:600 15px var(--f-display);color:var(--ink-2)}
+.sp.loading .sp-logo{opacity:0;transform:scale(.94)}
+.sp.loading .sp-load{opacity:1;transform:none}
+.sp.out{opacity:0;pointer-events:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.sp-load i{animation-duration:2s}.sp > div,.sp{transition-duration:.2s}}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(6,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
   padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabs button{border:0;background:transparent;padding:6px 0;display:grid;justify-items:center;gap:3px;font:600 10.5px var(--f-display);color:var(--ink-3)}
@@ -229,6 +242,10 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .askbox{display:flex;gap:8px;margin-top:4px}
 .askbox input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
 .ai-answer{padding:10px 12px;border-radius:10px;background:var(--bg);font-size:14px}.ai-answer p{margin:6px 0}.ai-answer ul{margin:4px 0;padding-left:18px}
+.planprop{margin-top:8px;padding:10px 12px;border:1.5px solid var(--quality);border-radius:10px;background:var(--card)}
+.planprop ul{margin:6px 0 8px;padding-left:18px;font-weight:600;font-size:14px}
+.planprop .acts{display:flex;gap:8px}
+.planprop.applied{border-color:var(--go)}
 details.fold{margin-top:14px;border-top:1px solid var(--line)}
 details.fold > summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 2px 10px;cursor:pointer;user-select:none}
 details.fold > summary::-webkit-details-marker{display:none}
@@ -393,6 +410,10 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 
 </head>
 <body>
+<div class="sp" id="splash" role="status" aria-label="Loading Telemetry">
+  <div class="sp-logo"><img src="data:image/png;base64,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" alt=""><b>Telemetry<span>.</span></b></div>
+  <div class="sp-load"><i></i><p>Loading your data</p></div>
+</div>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -416,7 +437,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.28-21';
+const APP_VERSION = '2026.10.29-2';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -470,7 +491,16 @@ const Mock = (() => {
         evaluated: { headline: 'Good work; heavy legs match the late HR drift', status: 'done', score: 7, summary: ['Your RPE 8 fits the HR and pace data.', 'Heavy legs after km 6 line up with the GCT rise.', 'Keep tomorrow easy and prioritise sleep.'], details: 'Example text using your self-evaluation alongside the data.', alternative: null } };
       return { ...ex[p.stage], example: true, model: 'example' };
     },
-    aiAsk(p) { return { answer: 'Example answer (preview only). On the live app Claude answers from your own data: plan, recent runs, Garmin signals, load and races.' }; },
+    aiAsk(p) {
+      const rows = (p.context.planEditing || {}).rows || [], sport = rows.find(r => r.date > p.context.yourDay && /badminton|soccer/i.test(r.activity));
+      if (/instead|swap|move|change|skip/i.test(p.question) && sport) return { answer: `Example (preview only): swapping **${sport.activity}** for **Tennis** on ${sport.weekday}. Similar load, so nothing else moves. Tap Apply to update your plan.`,
+        changes: [{ row: sport.row, activity: 'Tennis', type: '', plannedKm: null, summary: `${sport.weekday} ${sport.date.slice(8)}: ${sport.activity} → Tennis` }] };
+      return { answer: 'Example answer (preview only). On the live app Claude answers from your own data: plan, recent runs, Garmin signals, load and races. Try asking it to swap a session.', changes: [] };
+    },
+    updatePlan(p) {
+      p.changes.forEach(c => { const r = raw.log.find(x => x[0] === c.row); if (!r) return; if (c.activity) r[3] = c.activity; if (c.type != null) r[4] = c.type; if (c.plannedKm !== undefined) r[5] = c.plannedKm == null ? '' : String(c.plannedKm); if (c.date) r[2] = c.date; });
+      return { ok: true, skipped: [], data: this.getData() };
+    },
     aiWeekly() { return { headline: 'Example weekly review', score: 7, summary: ['Example line one.', 'Example line two.', 'Example line three.'], details: 'Preview only. The live app reviews last week\'s plan versus what you did, load trend, recovery and notes.' }; },
     aiRace() { return { headline: 'Example race-week briefing', summary: ['Example line one.', 'Example line two.', 'Example line three.'], details: 'Preview only. The live app covers taper, pacing for the heat, race-morning timeline and fuelling.' }; },
     savePr(p) { raw.prs = (raw.prs || []).filter(r => r[1] !== p.dist); raw.prs.push([0, p.dist, p.time, p.date, p.source]); return { ok: true, data: this.getData() }; },
@@ -907,6 +937,40 @@ function mdLite(t) {
   return html + (list ? '</ul>' : '');
 }
 
+/* ---------- plan changes proposed in Ask Telemetry ---------- */
+// What the coach may edit: upcoming Training Log rows that aren't logged yet.
+function planEditingContext() {
+  const from = addDays(TODAY, -1), to = addDays(TODAY, 21);
+  const rows = M.plan.filter(p => p.date >= from && p.date <= to && !p.done)
+    .map(p => ({ row: p.row, date: p.date, weekday: DOW[D(p.date).getDay()], activity: p.activity, type: p.type || '', plannedKm: p.planned || null }));
+  const names = [...new Set(M.plan.map(p => p.activity + (p.type ? ` | type: ${p.type}` : '')))].slice(0, 40);
+  const dates = {}; for (let i = -1; i <= 7; i++) { const d = addDays(TODAY, i); dates[i === -1 ? 'yesterday' : i === 0 ? 'today' : i === 1 ? 'tomorrow' : DOW[D(d).getDay()]] = `${d} (${DOW[D(d).getDay()]})`; }
+  return { note: 'Training happens in the evening, so a session belongs to its calendar date. "today" is the athlete\'s current day.', dates, rows, activityNames: names };
+}
+function planProposal() {
+  const P = state.ask.changes || [];
+  if (!P.length) return '';
+  const S = state.ask.applyState || '';
+  return `<div class="planprop ${S === 'done' ? 'applied' : ''}">
+    <div class="mono">${S === 'done' ? 'Plan updated' : 'Proposed plan change'}</div>
+    <ul>${P.map(c => `<li>${esc(c.summary || `${fmtDay(c.date || c.expectDate)}: ${c.activity || ''}`)}</li>`).join('')}</ul>
+    ${S === 'done' ? (state.ask.skipped && state.ask.skipped.length ? `<p class="desc warn-t" style="margin:0">Not changed: ${esc(state.ask.skipped.join('; '))}</p>` : '')
+      : S === 'cancelled' ? '<p class="desc" style="margin:0">Cancelled. Nothing changed.</p>'
+      : `<div class="acts"><button class="btn sm" id="planApply" type="button" ${S === 'busy' ? 'disabled' : ''}>${S === 'busy' ? 'Applying…' : 'Apply'}</button><button class="linkbtn" id="planCancel" type="button">Cancel</button></div>`}
+  </div>`;
+}
+async function applyPlanChanges() {
+  const P = state.ask.changes || []; if (!P.length) return;
+  state.ask.applyState = 'busy'; render();
+  try {
+    const res = await API.call('updatePlan', { changes: P.map(c => ({ row: c.row, expectDate: c.expectDate, expectActivity: c.expectActivity, date: c.date, activity: c.activity, type: c.type, plannedKm: c.plannedKm })) });
+    if (res && res.data) { RAW = res.data; M = build(RAW); }
+    state.ask.applyState = 'done'; state.ask.skipped = res && res.skipped || [];
+    toast(state.ask.skipped.length ? 'Some changes were skipped' : 'Plan updated');
+  } catch (e) { state.ask.applyState = ''; toast('Could not update the plan: ' + (e && e.message ? e.message : e)); }
+  render();
+}
+
 const STAGE_LABEL = { before: 'Before training', after: 'After training', evaluated: 'After training · with your evaluation' };
 function aiCard() {
   const A = state.ai, d = A.data;
@@ -925,11 +989,12 @@ function aiCard() {
       ${A.more ? `<div class="ai-more">${mdLite(d.details)}</div>` : ''}
       <div class="ai-foot"><button class="linkbtn" id="aiMore" type="button">${A.more ? 'Show less' : 'Read more'}</button></div>`}
     <form id="askForm" class="askbox" autocomplete="off">
-      <input id="askQ" maxlength="500" placeholder="Ask Telemetry about your training…" value="${esc(state.ask.q)}">
+      <input id="askQ" maxlength="500" placeholder="Ask Telemetry about your training…" value="">
       <button class="btn sm" type="submit" ${state.ask.loading ? 'disabled' : ''}>${state.ask.loading ? '…' : 'Ask'}</button>
     </form>
     ${state.ask.error ? `<p class="desc warn-t">${esc(state.ask.error)}</p>` : ''}
-    ${state.ask.answer ? `<div class="ai-answer"><div class="mono">${esc(state.ask.q)}</div>${mdLite(state.ask.answer)}</div>` : ''}
+    ${state.ask.loading ? `<div class="ai-answer"><div class="mono">${esc(state.ask.q)}</div><div class="ai-skel"><i></i><i></i></div></div>` : ''}
+    ${state.ask.answer ? `<div class="ai-answer"><div class="mono">${esc(state.ask.q)}</div>${mdLite(state.ask.answer)}${planProposal()}</div>` : ''}
     <p class="desc fine" style="margin:6px 0 0">AI-written from your data. Coaching suggestions, not medical advice.</p>
     ${d && !A.error ? `<p class="desc fine num" style="margin:2px 0 0">${d.example ? 'Example (preview)' : `Claude ${esc(String(d.model || '').replace('claude-', ''))}${d.usage && d.usage.usd != null ? ` · ${usd(d.usage.usd)} this summary` : ''}${d.spend ? ` · ${usd(d.spend.month)} this month` : ''}`}</p>` : ''}
   </div>`;
@@ -1850,7 +1915,7 @@ function renderActivity() {
     ${W ? `<div class="phasebar">${a.phases.map(p => `<span class="ph ph-${p.kind}" style="flex:${p.timeS}"><b>${{ warmup: 'Warm-up', workout: 'Workout', cooldown: 'Cool-down' }[p.kind]}</b> ${km1(p.distM / 1000)} km · ${p.paceS ? paceStr(p.paceS) : '—'}</span>`).join('')}</div>
       <p class="desc fine" style="margin:6px 2px 0">${a.phaseSource === 'workout' ? 'From your Garmin structured workout laps.' : 'Estimated from km pace: slower opening and closing kms. Run a Garmin structured workout for exact boundaries.'} Whole run: ${km1(km)} km at ${paceStr(pace)}/km, ${avgHr ? Math.round(avgHr) : '—'} bpm.</p>` : ''}
     </div>
-    ${fold('a-charts', 'Charts', `<div class="card chart runcharts">${runCharts(a, rw, rwTot)}</div>`, '6 charts')}
+    ${fold('a-charts', 'Charts', `<div class="card chart runcharts">${runCharts(a, rw, rwTot)}</div>`, /run/i.test(a.type || '') ? '6 charts' : 'heart rate')}
     ${fold('a-stats', 'Statistics', `<div class="card metrics">
       ${metric('Time', fmtDur(timeS), a.elapsedS ? `elapsed ${fmtDur(a.elapsedS)}` : 'timer')}
       ${metric('Avg pace', pace ? paceStr(pace) : '—', '/km whole run')}
@@ -1896,15 +1961,19 @@ function renderActivity() {
 /* Stacked charts over the course of a run, sharing one distance axis.
    trace rows: [distance m, pace s/km, HR, cadence spm, stride m, GCT ms, state R/W/S, elapsed s] */
 function runCharts(a, rw, rwTot) {
-  const tr = (a.trace || []).filter(p => p[0] != null);
+  // Runs are plotted against distance; everything else (tennis, badminton…) against time,
+  // because you barely cover ground on a court and a distance axis squashes it into gaps.
+  const isRun = /run/i.test(a.type || '');
+  const X = p => isRun ? p[0] : p[7];
+  const tr = (a.trace || []).filter(p => X(p) != null);
   if (tr.length < 3) return '<div class="empty">No samples recorded for this activity.</div>';
-  const maxD = tr[tr.length - 1][0] || 1, W = 340, L = 36, R = 6, H = 92, T = 8, B = 8;
+  const maxD = X(tr[tr.length - 1]) || 1, W = 340, L = 36, R = 6, H = 92, T = 8, B = 8;
   const x = d => L + (W - L - R) * d / maxD;
 
   // walking / standing stretches, shaded on every chart
   const bands = [];
   let open = null;
-  tr.forEach((p, i) => {
+  if (isRun) tr.forEach((p, i) => {
     const off = p[6] && p[6] !== 'R';
     if (off && !open) open = { a: i ? tr[i - 1][0] : p[0], s: p[6] };
     if (!off && open) { bands.push({ a: open.a, b: p[0] }); open = null; }
@@ -1913,18 +1982,20 @@ function runCharts(a, rw, rwTot) {
   const bandSvg = bands.map(b => `<rect x="${x(b.a)}" y="0" width="${Math.max(1.5, x(b.b) - x(b.a))}" height="${H}" fill="var(--long)" opacity=".14"/>`).join('');
 
   const pct = (arr, q) => { const s = [...arr].sort((m, n) => m - n); return s[Math.min(s.length - 1, Math.max(0, Math.round((s.length - 1) * q)))]; };
-  const metrics = [
+  const allMetrics = [
     { k: 1, name: 'Pace', unit: '/km', color: 'var(--quality)', fmt: v => paceStr(v), invert: true, ok: v => v > 120 && v < 1500 },
     { k: 2, name: 'Heart rate', unit: 'bpm', color: 'var(--race)', fmt: v => Math.round(v) },
     { k: 3, name: 'Cadence', unit: 'spm', color: 'var(--easy)', fmt: v => Math.round(v) },
     { k: 4, name: 'Stride', unit: 'm', color: 'var(--strength)', fmt: v => v.toFixed(2) },
     { k: 5, name: 'Ground contact', unit: 'ms', color: 'var(--long)', fmt: v => Math.round(v) }
   ];
+  const metrics = isRun ? allMetrics : allMetrics.filter(m => m.k === 2);   // pace, cadence and form mean little on a court
 
   // shared tap targets: one column every ~2.5% of the run, showing every metric at that point
   const cols = 40, colW = (W - L - R) / cols;
   const tipAt = d => {
-    let best = tr[0]; for (const p of tr) { if (Math.abs(p[0] - d) < Math.abs(best[0] - d)) best = p; }
+    let best = tr[0]; for (const p of tr) { if (Math.abs(X(p) - d) < Math.abs(X(best) - d)) best = p; }
+    if (!isRun) return [`${fmtDur(best[7] || 0)} in`, `HR ${best[2] || '—'} bpm`].join('|');
     const st = best[6] === 'W' ? ' · walking' : best[6] === 'S' ? ' · stopped' : '';
     return [`${(best[0] / 1000).toFixed(2)} km · ${fmtDur(best[7] || 0)}${st}`,
       `Pace ${best[1] && best[1] < 1500 ? paceStr(best[1]) : '—'} · HR ${best[2] || '—'}`,
@@ -1933,17 +2004,18 @@ function runCharts(a, rw, rwTot) {
   };
   const hits = Array.from({ length: cols }, (_, i) => { const d = (i + 0.5) / cols * maxD; return `<rect class="hit" x="${L + i * colW}" y="0" width="${colW}" height="${H}" fill="transparent" data-tip="${esc(tipAt(d))}"/>`; }).join('');
 
-  const phaseSvg = (a.phases && a.phases.length > 1 ? a.phases.filter(p => p.kind !== 'workout') : []).map(p => `<rect x="${x(p.d0)}" y="0" width="${Math.max(1, x(p.d0 + p.distM) - x(p.d0))}" height="${H}" fill="url(#wucd)"/>`).join('');
+  const phaseSvg = (isRun && a.phases && a.phases.length > 1 ? a.phases.filter(p => p.kind !== 'workout') : []).map(p => `<rect x="${x(p.d0)}" y="0" width="${Math.max(1, x(p.d0 + p.distM) - x(p.d0))}" height="${H}" fill="url(#wucd)"/>`).join('');
   const kmStepC = maxD > 15000 ? 5 : maxD > 6000 ? 2 : 1;
+  const unitX = isRun ? 1000 : 60 * (maxD > 5400 ? 30 : maxD > 1800 ? 15 : 10), stepX = isRun ? kmStepC : 1;   // km, or 10/15/30-minute marks
   let xTicks = '';
-  for (let k = kmStepC; k * 1000 < maxD - 300; k += kmStepC) xTicks += `<line x1="${x(k * 1000)}" x2="${x(k * 1000)}" y1="${H - 4}" y2="${H}" stroke="var(--ink-3)" stroke-width="1"/>`;
+  for (let k = stepX; k * unitX < maxD - unitX * 0.3; k += stepX) xTicks += `<line x1="${x(k * unitX)}" x2="${x(k * unitX)}" y1="${H - 4}" y2="${H}" stroke="var(--ink-3)" stroke-width="1"/>`;
   const charts = metrics.map(m => {
     const pts = tr.filter(p => p[m.k] != null && (!m.ok || m.ok(p[m.k])));
     if (pts.length < 3) return '';
     const runVals = pts.filter(p => p[6] === 'R' || !p[6]).map(p => p[m.k]);
     const all = pts.map(p => p[m.k]);
     let lo = pct(all, 0.03), hi = pct(all, 0.97);
-    const tg = (a.targets || []).filter(t => (m.k === 1 && t.kind === 'pace') || (m.k === 2 && t.kind === 'hr'));
+    const tg = (isRun ? a.targets || [] : []).filter(t => (m.k === 1 && t.kind === 'pace') || (m.k === 2 && t.kind === 'hr'));
     tg.forEach(t => { lo = Math.min(lo, t.lo); hi = Math.max(hi, t.hi); });   // keep the whole target band on the chart
     if (hi - lo < 1e-6) { lo -= 1; hi += 1; }
     const padv = (hi - lo) * 0.12; lo -= padv; hi += padv;
@@ -1953,7 +2025,8 @@ function runCharts(a, rw, rwTot) {
     let d = '', on = false, prev = null;
     tr.forEach(p => {
       const v = p[m.k], good = v != null && (!m.ok || m.ok(v));
-      if (good) { d += `${on && prev != null && p[0] - prev < maxD / 30 ? 'L' : 'M'}${x(p[0]).toFixed(1)},${y(v).toFixed(1)}`; on = true; prev = p[0]; } else on = false;
+      // runs break the line across pauses; other sports join every sample into one line
+      if (good) { d += `${prev != null && (!isRun || (on && X(p) - prev < maxD / 30)) ? 'L' : 'M'}${x(X(p)).toFixed(1)},${y(v).toFixed(1)}`; on = true; prev = X(p); } else on = false;
     });
     const fast = m.invert ? Math.min(...all) : Math.max(...all);
     return `<div class="rc">
@@ -1975,6 +2048,11 @@ function runCharts(a, rw, rwTot) {
       </svg></div>`;
   }).join('');
 
+  if (!isRun) {
+    let tl = ''; for (let k = 0; k * unitX <= maxD; k++) tl += `<text x="${Math.min(W - R - 6, x(k * unitX))}" y="11" text-anchor="${k === 0 ? 'start' : 'middle'}" font-size="9.5" fill="var(--ink-3)" font-family="var(--f-mono)">${k * unitX / 60}${k === 0 ? ' min' : ''}</text>`;
+    return `${charts}<svg viewBox="0 0 ${W} 14" class="rcaxis" aria-hidden="true">${tl}</svg>
+      <p class="desc fine" style="margin-top:4px">Plotted over time. Tap the chart to read heart rate at that point.</p>`;
+  }
   // run / walk strip on the same axis
   let strip = '';
   for (let i = 1; i < tr.length; i++) {
@@ -2261,6 +2339,8 @@ document.addEventListener('click', e => {
   if (t.dataset.act) { loadActivity(t.dataset.act); return; }
   if (t.id === 'actReload') { state.act = null; loadActivity(state.actId); return; }
   if (t.id === 'aiRefresh') { loadAiSummary(true); return; }
+  if (t.id === 'planApply') { applyPlanChanges(); return; }
+  if (t.id === 'planCancel') { state.ask.applyState = 'cancelled'; render(); return; }
   if (t.id === 'aiMore') { state.ai.more = !state.ai.more; render(); return; }
   if (t.id === 'editProfile') { const f = $('#profileForm'); if (f) f.hidden = !f.hidden; return; }
   if (t.id === 'calEarlier') { state.calEarlier = !state.calEarlier; render(); return; }
@@ -2294,12 +2374,17 @@ document.addEventListener('submit', e => {
   }
   if (e.target.id === 'askForm') {
     const q = $('#askQ').value.trim(); if (!q || state.ask.loading) return;
-    state.ask = { q, loading: true, answer: '', error: '' }; render();
+    $('#askQ').value = '';
+    state.ask = { q, loading: true, answer: '', error: '', changes: [], applyState: '' }; render();
     const act = (state.actCache && Object.values(state.actCache).find(activityInMyDay)) || state.act || null;
     const an = act && act.id ? (noteFor(act.id, String(act.start).slice(0, 10)) || {}) : {};
     API.call('aiAsk', { question: q, context: aiContext({ latestActivity: act && act.id ? compactActivity(act) : null,
-      latestActivitySelfEvaluation: act && act.id ? { legCondition: an.legs || null, notes: an.race || null, garminRpe: garminRpe(act.rpe), garminFeel: garminFeel(act.feel) } : null, recentNotes: M.notes.slice(-6).map(n => ({ date: n.date, legs: n.legs, notes: String(n.race).slice(0, 200) })), personalRecords: M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec) })) }) })
-      .then(r => { state.ask.answer = r.answer; }).catch(err => { state.ask.error = String(err && err.message || err); })
+      latestActivitySelfEvaluation: act && act.id ? { legCondition: an.legs || null, notes: an.race || null, garminRpe: garminRpe(act.rpe), garminFeel: garminFeel(act.feel) } : null, recentNotes: M.notes.slice(-6).map(n => ({ date: n.date, legs: n.legs, notes: String(n.race).slice(0, 200) })), personalRecords: M.prs.map(p => ({ distance: p.dist, time: fmtDur(p.sec) })), planEditing: planEditingContext() }) })
+      .then(r => {
+        state.ask.answer = r.answer;
+        // keep only changes to rows we offered, and remember what each row held so the sheet can check it hasn't moved on
+        state.ask.changes = (r.changes || []).map(c => { const p = M.plan.find(x => x.row === +c.row && !x.done); return p ? { ...c, row: p.row, expectDate: p.date, expectActivity: p.activity } : null; }).filter(Boolean);
+      }).catch(err => { state.ask.error = String(err && err.message || err); })
       .finally(() => { state.ask.loading = false; render(); });
     return;
   }
@@ -2391,6 +2476,16 @@ async function checkVersion() {
   } catch (e) {}
 }
 
+/* ---------- splash: the logo for 2 s, then a spinner until the data is in ---------- */
+const SPLASH = { t0: Date.now(), ready: false, gone: false };
+function splashHide() {
+  const el = document.querySelector('#splash'); if (!el || !el.classList || SPLASH.gone) return;
+  SPLASH.gone = true; el.classList.add('out'); setTimeout(() => el.remove(), 500);
+}
+function splashDone() { SPLASH.ready = true; if (Date.now() - SPLASH.t0 >= 2000) splashHide(); }
+setTimeout(() => { if (SPLASH.ready) splashHide(); else { const el = document.querySelector('#splash'); if (el && el.classList) el.classList.add('loading'); } }, 2000);
+setTimeout(splashHide, 30000);   // never trap the app behind the splash
+
 async function load() {
   checkVersion();
   $('#previewBanner').hidden = !IS_PREVIEW;
@@ -2424,7 +2519,7 @@ document.addEventListener('click', e => {
 // roll over to the next day at DAY_START even if the app stays open
 setInterval(() => { if (M && myDayNow().day !== TODAY) render(); }, 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); if (document.visibilityState === 'visible' && !IS_PREVIEW && CONF.ready && M) API.call('getData').then(d => { RAW = d; M = build(d); render(); setSync('', 'Synced'); }).catch(() => {}); });
-load();
+load().finally(splashDone);
 </script>
 </body>
 </html>
