@@ -63,7 +63,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .sp.out{opacity:0;pointer-events:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.sp-load i{animation-duration:2s}.sp > div,.sp{transition-duration:.2s}}
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(6,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:22;display:grid;grid-template-columns:repeat(6,1fr);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
   padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 nav.tabs button{border:0;background:transparent;padding:6px 0;display:grid;justify-items:center;gap:3px;font:600 10.5px var(--f-display);color:var(--ink-3)}
 nav.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -255,7 +255,8 @@ details.fold > summary::-webkit-details-marker{display:none}
 details.fold .chev{width:20px;height:20px;flex:none;fill:none;stroke:var(--ink-2);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
 details.fold[open] .chev{transform:rotate(180deg)}
 details.fold > summary:focus-visible{outline:2px solid var(--quality);outline-offset:2px;border-radius:8px}
-.fold-b{padding:2px 0 6px;display:grid;gap:12px}
+.fold-b{padding:2px 0 6px;display:grid;gap:12px;min-width:0}
+.fold-b > *,.stack > *,details.fold{min-width:0}   /* grid children may not stretch the page past the screen */
 .fold-b > .card{margin:0}
 svg.loadweeks{display:block;width:100%;height:auto;margin-top:8px}
 .prdate{display:block;font:500 11px var(--f-body);color:var(--ink-3)}
@@ -375,9 +376,9 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink-2);min-width:0}
 .empty{padding:28px 20px;text-align:center;color:var(--ink-2)}
 
 /* sheet */
-.scrim{position:fixed;inset:0;background:rgba(10,12,24,.45);z-index:20}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:22px 22px 0 0;max-height:88vh;overflow:auto;
-  padding:18px max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px))}
+.scrim{position:fixed;inset:0 0 var(--navh,0px) 0;background:rgba(10,12,24,.45);z-index:20}
+.sheet{position:fixed;left:0;right:0;bottom:var(--navh,0px);z-index:21;background:var(--card);border-radius:22px 22px 0 0;max-height:calc(88vh - var(--navh,0px));overflow:auto;box-shadow:0 -6px 24px rgba(10,12,24,.12);
+  padding:18px max(18px,env(safe-area-inset-right,0px)) 18px max(18px,env(safe-area-inset-left,0px))}
 .sheet-in{max-width:560px;margin:0 auto;display:grid;gap:12px}
 .sheet h3{margin:0;font:800 22px var(--f-display)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -438,7 +439,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.10.29-5';
+const APP_VERSION = '2026.10.30-3';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -469,7 +470,7 @@ const Mock = (() => {
   return {
     getData: () => JSON.parse(JSON.stringify(raw)),
     saveSession(p) {
-      if (p.logRow) { const r = raw.log.find(x => x[0] === p.logRow); if (r) put(r, p, true); }
+      if (p.logRow) { const r = raw.log.find(x => x[0] === p.logRow); if (r) put(r, p, !p.renamePlan); }
       let r = [...raw.s1, ...raw.s2].find(x => x[2] === p.date && (x[3] === p.activity || x[3] === p.prevActivity) && filled(x))
         || (p.preferS2 ? null : raw.s1.find(x => x[2] === p.date && !filled(x)));
       if (!r && p.preferS2) { r = [9500 + raw.s2.length, '', p.date, '', '', '', '', '', '', '', '', '', '', '', 'FALSE', '', '', '']; raw.s2.push(r); }
@@ -765,7 +766,8 @@ function build(raw) {
   const weights = (raw.weights || []).filter(r => r[1] && num(r[2])).map(r => ({ date: /^\d{4}-/.test(r[1]) ? r[1] : parseLoose(r[1]), kg: num(r[2]) })).filter(w => w.date).sort((a, b) => a.date.localeCompare(b.date));
   const garminDaily = (raw.garminDaily || []).filter(r => /^\d{4}-\d\d-\d\d/.test(r[1])).map(r => {
     const n = v => (v === '' || v == null ? null : num(v));
-    return { date: r[1].slice(0, 10), hrv: n(r[2]), hrv7: n(r[3]), hrvStatus: r[4] || '', hrvLo: n(r[5]), hrvHi: n(r[6]), rhr: n(r[7]), rhr7: n(r[8]), bb: n(r[9]), stress: n(r[10]), load: n(r[11]), vo2: n(r[12]), sleep: n(r[13]), totalKcal: n(r[14]), activeKcal: n(r[15]), bmrKcal: n(r[16]), workoutKcal: n(r[17]) };
+    return { date: r[1].slice(0, 10), hrv: n(r[2]), hrv7: n(r[3]), hrvStatus: r[4] || '', hrvLo: n(r[5]), hrvHi: n(r[6]), rhr: n(r[7]), rhr7: n(r[8]), bb: n(r[9]), stress: n(r[10]), load: n(r[11]), vo2: n(r[12]), sleep: n(r[13]), totalKcal: n(r[14]), activeKcal: n(r[15]), bmrKcal: n(r[16]), workoutKcal: n(r[17]),
+      sleepScore: n(r[18]), bbNow: n(r[19]), ready: n(r[20]), readyLevel: r[21] || '', tStatus: r[22] || '', loadFocus: r[23] || '' };
   }).sort((a, b) => a.date.localeCompare(b.date));
   const fitness = (raw.fitness || []).map(r => ({ label: /^\d{4}-\d\d-\d\d$/.test(r[0]) ? MON[+r[0].slice(5, 7) - 1] + ' ' + r[0].slice(0, 4) : r[0], vo2: num(r[1]) || null, ltHr: r[2], ltPace: r[3] })).filter(f => f.label);
   const notes = (raw.notes || []).filter(r => r[1]).map(r => ({ key: String(r[1]), date: String(r[2] || '').slice(0, 10), name: r[3] || '', legs: r[4] || '', race: r[5] || '' }));
@@ -928,6 +930,14 @@ function activityInMyDay(a) {
 function compactActivity(a) {
   if (!a || !a.id) return null;
   const r1 = v => v == null ? null : Math.round(v * 10) / 10;
+  // court sports and gym: distance, pace and cadence mean nothing, and we don't know the format (singles, doubles, lesson, match)
+  if (!/run/i.test(a.type || '')) return {
+    name: a.name, sport: a.type, start: a.start, duration: fmtDur(a.timerS || a.durationS || 0),
+    avgHr: a.avg && a.avg.hr ? Math.round(a.avg.hr) : a.avgHR || null, maxHr: a.maxHrFit || a.maxHR || null,
+    hrZonesMinutes: a.zones ? { z1: Math.round(a.zones.secs[1] / 60), z2: Math.round(a.zones.secs[2] / 60), z3: Math.round(a.zones.secs[3] / 60), z4: Math.round(a.zones.secs[4] / 60), z5: Math.round(a.zones.secs[5] / 60) } : null,
+    aerobicTE: a.te, anaerobicTE: a.ate, garminLoad: a.load, calories: a.calories, garminRpe: garminRpe(a.rpe), garminFeel: garminFeel(a.feel),
+    note: 'Not a run. Format unknown (singles/doubles, lesson/drills/match) unless the athlete\'s notes say so; do not judge or grade it.'
+  };
   return {
     name: a.name, start: a.start, eventType: a.eventType, distanceKm: r1((a.totalDistM || a.distanceM || 0) / 1000),
     timerTime: fmtDur(a.timerS || a.durationS || 0), elapsed: a.elapsedS ? fmtDur(a.elapsedS) : null,
@@ -956,7 +966,8 @@ function aiContext(extra) {
     todaysTraining: L.items.map(i => ({ session: i.label, estMinutes: Math.round(i.min), done: !!i.done })),
     planNext3Days: [1, 2, 3].flatMap(k => plan(addDays(TODAY, k))),
     week: { number: M.current.n, plannedRunKm: +M.current.planned.toFixed(1), plannedIncludesEstimates: M.current.est, longRunKm: M.current.longKm || null, doneRunKm: +M.current.actual.toFixed(1), sessionsTicked: `${M.current.ticked}/${M.current.sessions}` },
-    garminLast8Days: M.garminDaily.slice(-8).map(r => ({ date: r.date, hrv: r.hrv, hrv7: r.hrv7, hrvStatus: r.hrvStatus, hrvBaseline: r.hrvLo ? [r.hrvLo, r.hrvHi] : null, restingHr: r.rhr, restingHr7: r.rhr7, bodyBatteryWake: r.bb, stress: r.stress, sleepH: r.sleep, load: r.load })),
+    garminLast8Days: M.garminDaily.slice(-8).map(r => ({ date: r.date, hrv: r.hrv, hrv7: r.hrv7, hrvStatus: r.hrvStatus, hrvBaseline: r.hrvLo ? [r.hrvLo, r.hrvHi] : null, restingHr: r.rhr, restingHr7: r.rhr7, bodyBatteryWake: r.bb, stress: r.stress, sleepH: r.sleep, sleepScore: r.sleepScore, load: r.load,
+      ...(r.bbNow != null ? { bodyBatteryNow: r.bbNow } : {}), ...(r.ready != null ? { garminTrainingReadiness: r.ready, readinessLevel: r.readyLevel } : {}), ...(r.tStatus ? { garminTrainingStatus: r.tStatus, loadFocus: r.loadFocus } : {}) })),
     load: loadStats(),
     recentRuns: M.runs.slice(-10).map(r => ({ date: r.date, type: r.type || r.activity, km: r.km, time: r.time, pace: r.paceSec ? paceStr(r.paceSec) : null, hr: r.hr ? Math.round(r.hr) : null, rpe: r.rpe || null })),
     upcomingRaces: M.races.filter(r => r.date && r.date >= TODAY).slice(0, 4).map(r => ({ name: r.name, date: r.date, km: r.dist, daysAway: daysBetween(TODAY, r.date), goal: !!r.goal })),
@@ -993,7 +1004,9 @@ async function loadAiSummary(force) {
   if (state.tab === 'coach') render();
   try {
     const sheetSession = M.history.filter(h => h.date === TODAY).map(h => ({ activity: h.activity, km: h.km, time: h.time, hr: h.hr, rpe: h.rpe, notes: String(h.notes || '').slice(0, 300) }));
-    const ctx = aiContext({ stage: st.stage, activity: st.act ? compactActivity(st.act) : null, loggedToday: sheetSession, garminActivitiesToday: st.garminToday,
+    const runDoneToday = !!((st.act && /run/i.test(st.act.type || '')) || (st.garminToday || []).some(x => /run/i.test(x.type || '')) || todayLoad(TODAY).items.some(i => i.done && i.run));
+    state.ai.runDoneToday = runDoneToday;
+    const ctx = aiContext({ stage: st.stage, runDoneToday, activity: st.act ? compactActivity(st.act) : null, loggedToday: sheetSession, garminActivitiesToday: st.garminToday,
       recentSessions: recentSessions(10), hardEffortsLast7Days: hardEffortsLast7(), planEditing: planEditingContext(),
       selfEvaluation: st.stage === 'evaluated' ? { legCondition: st.note.legs || null, notes: st.note.race || null, garminRpe: st.act ? garminRpe(st.act.rpe) : null, garminFeel: st.act ? garminFeel(st.act.feel) : null } : null });
     state.ai.data = await API.call('aiSummary', { stage: st.stage, key: st.key, context: ctx, force: !!force });
@@ -1082,7 +1095,7 @@ function aiCard() {
       <button class="linkbtn" id="aiRefresh" type="button" ${A.loading ? 'disabled' : ''}>${A.loading ? 'Thinking…' : '↻'}</button></div>
     ${A.error ? `<p class="desc warn-t">Couldn't write today's summary: ${esc(A.error)}</p>` :
       !d ? `<div class="ai-skel"><i></i><i></i><i></i></div>` : `
-      <div class="ai-head">${status}<h3>${esc(d.headline || '')}</h3>${d.score != null ? `<span class="ai-score num">${esc(d.score)}<small>/10</small></span>` : ''}</div>
+      <div class="ai-head">${status}<h3>${esc(d.headline || '')}</h3>${d.score != null && A.runDoneToday !== false ? `<span class="ai-score num">${esc(d.score)}<small>/10</small></span>` : ''}</div>
       <ul class="ai-lines">${(d.summary || []).slice(0, 3).map(l => `<li>${esc(l)}</li>`).join('')}</ul>
       ${d.alternative ? `<p class="ai-alt"><b>Instead:</b> ${esc(d.alternative)}</p>` : ''}
       ${planProposal(state.ai)}
@@ -1831,21 +1844,32 @@ function fitnessSection() {
   // Readiness signals
   const sig = [];
   const hrvRow = lastVal(dly, 'hrv'), rhrRow = lastVal(dly, 'rhr'), bbRow = lastVal(dly, 'bb'), slRow = lastVal(dly, 'sleep');
+  const scRow = lastVal(dly, 'sleepScore'), nowRow = dly.find(r => r.date === TODAY && r.bbNow != null) || dly.find(r => r.date === addDays(TODAY, 1) && r.bbNow != null);
+  const readyRow = [...dly].reverse().find(r => r.ready != null && r.date >= addDays(TODAY, -1));
+  const statusRow = [...dly].reverse().find(r => r.tStatus && r.date >= addDays(TODAY, -3));
   let flags = 0;
+  const hrvSig = [];
   if (hrvRow) {
     const low = hrvRow.hrvLo && hrvRow.hrv < hrvRow.hrvLo, st = String(hrvRow.hrvStatus || '').toUpperCase();
     const bad = low || /LOW|POOR|UNBALANCED/.test(st);
     if (bad) flags++;
-    sig.push(['HRV last night', `${Math.round(hrvRow.hrv)} ms`, hrvRow.hrvLo ? `baseline ${Math.round(hrvRow.hrvLo)}–${Math.round(hrvRow.hrvHi)}${st && st !== 'NONE' ? ' · ' + st.toLowerCase() : ''}` : (st || ''), bad ? 'warn' : 'go']);
+    hrvSig.push(['HRV last night', `${Math.round(hrvRow.hrv)} ms`, hrvRow.hrvLo ? `baseline ${Math.round(hrvRow.hrvLo)}–${Math.round(hrvRow.hrvHi)}${st && st !== 'NONE' ? ' · ' + st.toLowerCase() : ''}` : (st || ''), bad ? 'warn' : 'go']);
   }
+  // order: sleep, Body Battery, resting HR, HRV last
+  if (slRow || scRow) {
+    const sc = scRow ? scRow.sleepScore : null, bad = (sc != null && sc < 60) || (slRow && slRow.sleep < 6); if (bad) flags++;
+    sig.push(['Sleep', sc != null ? `${Math.round(sc)}` : `${slRow.sleep} h`, [sc != null ? (sc >= 80 ? 'good' : sc >= 60 ? 'fair' : 'poor') + ' score' : '', slRow ? `${slRow.sleep} h` : '', fmtShort((scRow || slRow).date)].filter(Boolean).join(' · '), bad ? 'warn' : 'go']);
+  }
+  if (nowRow) sig.push(['Body Battery now', `${Math.round(nowRow.bbNow)}`, 'latest reading from your watch', nowRow.bbNow < 25 ? 'warn' : 'go']);
   if (rhrRow) {
     const diff = rhrRow.rhr7 ? rhrRow.rhr - rhrRow.rhr7 : 0, bad = diff >= 5;
     if (bad) flags++;
     sig.push(['Resting HR', `${Math.round(rhrRow.rhr)} bpm`, rhrRow.rhr7 ? `${diff > 0 ? '+' : ''}${Math.round(diff)} vs 7-day avg` : '', bad ? 'warn' : 'go']);
   }
-  if (bbRow) { const bad = bbRow.bb < 40; if (bad) flags++; sig.push(['Body Battery at wake', `${Math.round(bbRow.bb)}`, bbRow.bb >= 70 ? 'well charged' : bbRow.bb >= 40 ? 'moderate' : 'low', bad ? 'warn' : 'go']); }
-  if (slRow) { const bad = slRow.sleep < 6; if (bad) flags++; sig.push(['Sleep', `${slRow.sleep} h`, fmtShort(slRow.date), bad ? 'warn' : 'go']); }
-  const verdict = !sig.length ? null : flags === 0 ? ['Ready to train', 'go'] : flags === 1 ? ['Some fatigue showing', 'amber'] : ['Go easy today', 'warn'];
+  if (bbRow) { const bad = bbRow.bb < 40; if (bad) flags++; sig.splice(nowRow ? 2 : 1, 0, ['Body Battery at wake', `${Math.round(bbRow.bb)}`, bbRow.bb >= 70 ? 'well charged' : bbRow.bb >= 40 ? 'moderate' : 'low', bad ? 'warn' : 'go']); }
+  sig.push(...hrvSig);
+  const verdict = readyRow ? [`Garmin readiness ${Math.round(readyRow.ready)}${readyRow.readyLevel ? ' · ' + readyRow.readyLevel : ''}`, readyRow.ready >= 75 ? 'go' : readyRow.ready >= 50 ? 'amber' : 'warn']
+    : !sig.length ? null : flags === 0 ? ['Ready to train', 'go'] : flags === 1 ? ['Some fatigue showing', 'amber'] : ['Go easy today', 'warn'];
 
   // Training load from Garmin's per-activity load
   // Training load. Garmin's own acute load isn't in its API, so Telemetry rebuilds it from each
@@ -1909,6 +1933,7 @@ function fitnessSection() {
 
   const waiting = '<p class="desc">Fills in after the Garmin sync runs.</p>';
   return `<div class="stack">
+    ${statusRow ? `<div class="card fitcard"><header><div><div class="mono">Training status · Garmin</div><div class="pline"><span class="dot" style="background:var(--${/productive|peaking|maintaining/i.test(statusRow.tStatus) ? 'go' : /overreach|strain|unproductive/i.test(statusRow.tStatus) ? 'race' : 'long'})"></span> ${esc(statusRow.tStatus)}</div>${statusRow.loadFocus ? `<p class="desc" style="margin:2px 0 0">Load focus: ${esc(statusRow.loadFocus)}</p>` : ''}</div></header></div>` : ''}
     <div class="kpis fit">
       <div class="card kpi"><span class="mono">VO2 max</span><b class="num">${vo2 ? vo2.v : '—'}</b><small>${vo2 ? esc(vo2.src) : 'Not available yet'}${vo2Line.length > 1 ? ` · ${vo2Line[vo2Line.length - 1] - vo2Line[0] >= 0 ? '+' : ''}${(vo2Line[vo2Line.length - 1] - vo2Line[0]).toFixed(1)} since ${esc(M.fitness.find(f => f.vo2) ? M.fitness.find(f => f.vo2).label : 'start')}` : ''}</small>${trendLine(vo2Line, 'var(--quality)')}</div>
       <div class="card kpi"><span class="mono">Lactate threshold</span><b class="num">${lt ? esc(lt.ltPace || '—') : '—'}<small>${lt && lt.ltPace ? ' /km' : ''}</small></b><small>${ltLine.length > 1 ? `${ltGain >= 0 ? `${Math.round(ltGain)} s/km faster` : `${Math.round(-ltGain)} s/km slower`} since ${esc(ltFirst.label)}` : 'From your sheet'}</small>${ltTrend(M.fitness)}</div>
@@ -1916,7 +1941,7 @@ function fitnessSection() {
     <div class="card fitcard">
       <header><div><div class="mono">Readiness check</div>${verdict ? `<div class="pline"><span class="dot" style="background:var(--${verdict[1] === 'amber' ? 'long' : verdict[1]})"></span> ${verdict[0]}</div>` : '<div class="pline">Waiting for Garmin data</div>'}</div></header>
       ${sig.length ? `<ul class="load">${sig.map(([k, v, sub, c]) => `<li><span>${esc(k)}<br><small class="${c === 'warn' ? 'warn-t' : ''}">${esc(sub)}</small></span><span class="num" style="font:700 16px var(--f-display);color:var(--ink)">${esc(v)}</span></li>`).join('')}</ul>` : waiting}
-      <p class="desc fine">Telemetry's own check from Garmin's HRV, resting HR, Body Battery and sleep. Garmin's Training Readiness and Training Status aren't available through its API.</p>
+      <p class="desc fine">${readyRow ? 'Score from Garmin\'s Training Readiness; the signals above are what feeds it.' : 'Telemetry\'s own check from Garmin\'s sleep, Body Battery, resting HR and HRV. Garmin\'s Training Readiness appears here if your account shares it.'}</p>
     </div>
     <div class="card fitcard">
       <header><div><div class="mono">Training load</div>${ratio != null ? `<div class="pline num">${Math.round(acute)} <small>acute · ratio ${ratio.toFixed(2)}</small> <span class="chip k-${band[1] === 'go' ? 'easy' : band[1] === 'amber' ? 'long' : band[1] === 'warn' ? 'race' : 'rest'}" style="margin-left:4px">${band[0]}</span></div>` : hasLoad ? `<div class="pline num">${Math.round(plain7)} <small>last 7 days</small></div>` : '<div class="pline">—</div>'}</div></header>
@@ -2269,6 +2294,15 @@ function renderNutrition() {
 
 /* ================= log sheet ================= */
 let sheetCtx = null;
+// every activity name you use: a standard set, plus everything in your plan and logged history (current one first)
+function activityOptions(current) {
+  const std = ['Run: Easy', 'Run: Easy + optional Strides', 'Run: Quality', 'Run: Long', 'Run: Recovery', 'Run: Shakeout', 'Run: Race', 'Social Run',
+    'Tennis', 'Badminton', 'Soccer', 'Strength: Push', 'Strength: Pull', 'Strength: Legs', 'Rest'];
+  const seen = [...M.plan.map(p => p.sheetActivity || p.activity), ...M.history.map(h => h.activity)].filter(Boolean);
+  const all = [...new Set([current, ...std, ...seen].filter(Boolean))];
+  const group = a => /^run|social run/i.test(a) ? 0 : /^strength/i.test(a) ? 2 : /^rest$/i.test(a) ? 3 : 1;
+  return [current, ...all.filter(a => a !== current).sort((a, b) => group(a) - group(b) || a.localeCompare(b))];
+}
 function openLog(p) {
   sheetCtx = { ...p, rpeSel: p.rpe || '' };
   const typeOpts = [...new Set([p.type, ...M.types].filter(Boolean))];
@@ -2280,10 +2314,9 @@ function openLog(p) {
     <h3 id="sheetTitle">${esc(p.title || 'Log a session')}</h3>
     ${p.planned ? `<div class="desc">Planned ${km1(p.planned)} km. ${esc(WORKOUT_NOTES[p.type] || '')}</div>` : ''}
     <div class="grid2">
-      <label class="f">Activity<input id="fAct" value="${esc(p.activity || 'Run: Easy')}" list="actList"></label>
+      <label class="f">Activity<select id="fAct">${activityOptions(p.activity || 'Run: Easy').map(a => `<option ${a === (p.activity || 'Run: Easy') ? 'selected' : ''}>${esc(a)}</option>`).join('')}</select></label>
       <label class="f">Workout type<select id="fType"><option value=""></option>${typeOpts.map(t => `<option ${t === p.type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
     </div>
-    <datalist id="actList">${['Run: Easy','Run: Quality','Run: Long','Run: Recovery','Run: Race','Social Run','Soccer','Tennis','Badminton','Strength: Push','Strength: Pull','Strength: Legs','Rest'].map(a => `<option value="${a}">`).join('')}</datalist>
     <div class="grid3">
       <label class="f">Distance km<input id="fKm" class="num" inputmode="decimal" value="${p.km ? km1(p.km) : (run && p.planned ? km1(p.planned) : '')}"></label>
       <label class="f">Time h:mm:ss<input id="fTime" class="num" placeholder="0:45:00" value="${esc(p.time || '')}"></label>
@@ -2424,6 +2457,9 @@ document.addEventListener('mouseout', e => { if (e.target.closest('[data-tip]') 
 document.addEventListener('scroll', hideTip, { passive: true });
 
 function closeSheet() { $('#sheetRoot').innerHTML = ''; sheetCtx = null; }
+// sheets sit just above the tab bar, so the tabs stay visible and usable
+function measureNav() { const n = document.querySelector('nav.tabs'); if (n && n.getBoundingClientRect) document.documentElement.style.setProperty('--navh', Math.round(n.getBoundingClientRect().height) + 'px'); }
+try { measureNav(); setTimeout(measureNav, 1500); window.addEventListener('resize', measureNav); } catch (e) {}
 
 /* ================= actions ================= */
 async function syncGarminNow() {
@@ -2464,7 +2500,7 @@ document.addEventListener('click', e => {
   if (hr) { const h = M.history[+hr.dataset.hist]; if (h) openDetail(h); return; }
   const t = e.target.closest('button, .scrim');
   if (!t) return;
-  if (t.dataset.tab) { state.tab = t.dataset.tab; try { localStorage.setItem('telemetry.tab', state.tab); } catch (_) {} render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.tab) { if (sheetCtx || $('#sheetRoot').innerHTML) closeSheet(); state.tab = t.dataset.tab; try { localStorage.setItem('telemetry.tab', state.tab); } catch (_) {} render(); window.scrollTo(0, 0); return; }
   if (t.dataset.fuel) { const p = M.plan.find(x => String(x.row) === t.dataset.fuel); if (p) openFuel(p); return; }
   if (t.id === 'logFuel') { const n = +t.dataset.gels; closeSheet(); run('addMeal', { date: t.dataset.date, meal: 'Run fuel', item: `${n} gels (${n * GEL_G} g carbs)`, kcal: n * GEL_G * 4 }, 'Run fuel logged'); return; }
   if (t.id === 'garminBtn') { syncGarminNow(); return; }
@@ -2497,7 +2533,8 @@ document.addEventListener('submit', e => {
   e.preventDefault();
   if (e.target.id === 'logForm' && sheetCtx) {
     const v = id => $('#' + id).value.trim();
-    const p = { logRow: sheetCtx.logRow || null, preferS2: !!sheetCtx.preferS2 || /^strength/i.test(v('fAct')), date: sheetCtx.date, activity: v('fAct'), prevActivity: sheetCtx.activity, type: v('fType'),
+    const planAct = sheetCtx.sheetActivity || sheetCtx.activity;
+    const p = { logRow: sheetCtx.logRow || null, renamePlan: !!sheetCtx.logRow && v('fAct') !== planAct, preferS2: !!sheetCtx.preferS2 || /^strength/i.test(v('fAct')), date: sheetCtx.date, activity: v('fAct'), prevActivity: sheetCtx.activity, type: v('fType'),
       km: v('fKm'), time: v('fTime'), hr: v('fHr'), rpe: sheetCtx.rpeSel, sleep: v('fSleep'), strides: v('fStrides'), shoes: v('fShoes'), notes: v('fNotes'), legs: v('fLegs'), raceNotes: v('fRace') };
     if (!p.km && !p.time) { toast('Add a distance or a time so the session counts as done.'); return; }
     if (p.time && !/^\d{1,2}:\d{2}(:\d{2})?$/.test(p.time)) { toast('Time needs h:mm:ss, for example 0:45:00.'); return; }
