@@ -443,7 +443,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.11.03-5';
+const APP_VERSION = '2026.11.03-8';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -932,6 +932,25 @@ function activityInMyDay(a) {
   return my === TODAY;
 }
 
+/* Garmin's workout steps vs what you actually ran.
+   A step Garmin calls warm-up or cool-down only counts as "easy" if it was run clearly slower (5%+)
+   than the main block; otherwise it was really part of the run (e.g. a long run whose second half
+   sat in a 10 km "cool-down" step). */
+function realPhases(a) {
+  const ph = a && a.phases || [], w = ph.filter(p => p.kind === 'workout');
+  if (ph.length < 2 || !w.length) return null;
+  const wt = w.reduce((s, p) => s + p.timeS, 0), wd = w.reduce((s, p) => s + p.distM, 0), wp = wd > 0 ? wt / (wd / 1000) : null;
+  return ph.map(p => ({ ...p, easy: p.kind !== 'workout' && !!wp && !!p.paceS && p.paceS > wp * 1.05 }));
+}
+// the hard part of the run, only when some step really was easy; null = the whole run is the effort
+function trueWork(a) {
+  const rp = realPhases(a); if (!rp || !rp.some(p => p.easy)) return null;
+  const ws = rp.filter(p => !p.easy), t = ws.reduce((s, p) => s + p.timeS, 0), d = ws.reduce((s, p) => s + p.distM, 0);
+  const wm = k => { let s = 0, n = 0; ws.forEach(p => { if (p[k]) { s += p[k] * p.timeS; n += p.timeS; } }); return n ? s / n : null; };
+  return { distM: d, timeS: t, paceS: d ? t / (d / 1000) : null, hr: wm('hr'), cad: wm('cad'), gct: wm('gct'), step: wm('step'), vo: wm('vo') };
+}
+const STEP_LABEL = { warmup: 'Warm-up', workout: 'Run', cooldown: 'Cool-down' };
+
 function compactActivity(a) {
   if (!a || !a.id) return null;
   const r1 = v => v == null ? null : Math.round(v * 10) / 10;
@@ -947,11 +966,14 @@ function compactActivity(a) {
     name: a.name, start: a.start, eventType: a.eventType, distanceKm: r1((a.totalDistM || a.distanceM || 0) / 1000),
     timerTime: fmtDur(a.timerS || a.durationS || 0), elapsed: a.elapsedS ? fmtDur(a.elapsedS) : null,
     avgPace: a.avg && a.avg.paceS ? paceStr(a.avg.paceS) : null, avgHr: a.avg ? Math.round(a.avg.hr || 0) : null, maxHr: a.maxHrFit || a.maxHR,
-    workoutBlock: a.work ? { km: r1(a.work.distM / 1000), pace: paceStr(a.work.paceS), hr: Math.round(a.work.hr || 0), cadence: Math.round(a.work.cad || 0), gctMs: Math.round(a.work.gct || 0), strideM: a.work.step ? +a.work.step.toFixed(2) : null } : null,
+    workoutBlock: (() => { const w = trueWork(a); return w ? { km: r1(w.distM / 1000), pace: paceStr(w.paceS), hr: Math.round(w.hr || 0), cadence: Math.round(w.cad || 0), gctMs: Math.round(w.gct || 0), strideM: w.step ? +w.step.toFixed(2) : null } : null; })(),
     phaseSource: a.phaseSource || null,
     workoutTargets: (a.targets || []).length ? a.targets.map(t => ({ fromKm: r1(t.d0 / 1000), toKm: r1(t.d1 / 1000), ...(t.kind === 'pace' ? { pace: `${paceStr(t.lo)}–${paceStr(t.hi)}/km` } : { hr: `${t.lo}–${t.hi} bpm` }) })) : undefined,
-    phaseNote: a.phases && a.phases.length > 1 ? 'Warm-up and cool-down are deliberately easy. Judge pacing, HR drift, cadence and form on the WORKOUT phase only; never call warm-up/cool-down pace, cadence or HR a fade or fatigue.' : null,
-    phases: (a.phases || []).map(p => ({ kind: p.kind, km: r1(p.distM / 1000), time: fmtDur(p.timeS), pace: p.paceS ? paceStr(p.paceS) : null, hr: Math.round(p.hr || 0), cadence: Math.round(p.cad || 0), gctMs: Math.round(p.gct || 0),
+    phaseNote: (() => { const rp = realPhases(a); if (!rp) return null;
+      const fake = rp.filter(p => p.kind !== 'workout' && !p.easy);
+      return (rp.some(p => p.easy) ? 'Steps marked actuallyEasy:true were genuinely easy: judge pacing, HR drift, cadence and form without them, and never call them a fade. ' : '') +
+        (fake.length ? `Garmin labelled ${fake.map(p => `${(p.distM / 1000).toFixed(1)} km as "${STEP_LABEL[p.kind]}"`).join(' and ')}, but it was run at the same effort as the main block, so treat it as part of the run, not as easy running. Analyse the run continuously km by km.` : ''); })(),
+    phases: (realPhases(a) || []).map(p => ({ garminStep: STEP_LABEL[p.kind], actuallyEasy: p.easy, km: r1(p.distM / 1000), time: fmtDur(p.timeS), pace: p.paceS ? paceStr(p.paceS) : null, hr: Math.round(p.hr || 0), cadence: Math.round(p.cad || 0), gctMs: Math.round(p.gct || 0),
       splitsWithinPhase: (p.splits || []).map(sp => ({ km: sp.km, partial: !!sp.partial, time: fmtDur(sp.timeS), pace: paceStr(sp.timeS / (sp.distM / 1000)), hr: Math.round(sp.hr || 0), cad: Math.round(sp.cad || 0), gct: Math.round(sp.gct || 0) })) })),
     splits: a.phases && a.phases.length > 1 ? undefined : (a.splits || []).slice(0, 30).map(s => ({ km: s.km, time: fmtDur(s.timeS), pace: paceStr(s.timeS / (s.distM / 1000)), hr: Math.round(s.hr || 0), cad: Math.round(s.cad || 0), gct: Math.round(s.gct || 0) })),
     hrZonesMinutes: a.zones ? { z1: Math.round(a.zones.secs[1] / 60), z2: Math.round(a.zones.secs[2] / 60), z3: Math.round(a.zones.secs[3] / 60), z4: Math.round(a.zones.secs[4] / 60), z5: Math.round(a.zones.secs[5] / 60) } : null,
@@ -1247,7 +1269,8 @@ function renderCoach() {
     <h2 class="sec">Summary Report</h2>
     <p class="sub" style="margin-top:-4px">Your latest Garmin activities as a PDF report.</p>
     ${recentReports()}
-    ${fold('ai-coach', 'AI Coach', aiCard() + raceFold() + weeklyFold(), state.ai.loading && !state.ai.peek ? 'writing…' : state.ai.data ? esc(STAGE_LABEL[state.ai.stage] || 'summary ready') : 'no summary yet')}
+    ${fold('ai-coach', 'AI Coach', aiCard() + raceFold(), state.ai.loading && !state.ai.peek ? 'writing…' : state.ai.data ? esc(STAGE_LABEL[state.ai.stage] || 'summary ready') : 'no summary yet')}
+    ${weeklyFold()}
     <p class="mono" style="text-align:center;margin:8px 0 0">Telemetry build ${APP_VERSION}</p>`;
   setTimeout(() => { loadRecentActs(); loadAiSummary(false); if (state.open.has('ai-week')) loadWeekly(); if (state.open.has('ai-race')) loadRace(); }, 0);
 }
@@ -2152,10 +2175,9 @@ function renderActivity() {
   const pace = A.paceS || (km ? timeS / km : 0), gap = a.gapSpeed ? 1000 / a.gapSpeed : 0;
   const avgHr = A.hr || a.avgHR, avgCad = A.cad || a.cadence, avgStep = A.step || (a.strideCm ? a.strideCm / 100 : null), avgGct = A.gct || a.gctMs, avgVo = A.vo || a.vertOscCm;
   // Warm-up / cool-down excluded: header pace + HR and chart averages use the workout block
-  const W = a.work && a.phases && a.phases.length > 1 ? a.work : null;
-  const wPace = W ? W.paceS : pace, wHr = W ? W.hr : avgHr;
-  a._avg = W ? { 1: W.paceS, 2: W.hr, 3: W.cad, 4: W.step, 5: W.gct } : { 1: pace, 2: avgHr, 3: avgCad, 4: avgStep, 5: avgGct };
-  a._avgLabel = W ? 'workout avg' : 'avg';
+  const W = trueWork(a);   // only when a warm-up/cool-down step really was easy
+  a._avg = { 1: pace, 2: avgHr, 3: avgCad, 4: avgStep, 5: avgGct };
+  a._avgLabel = 'avg';
   const when = (() => { const m = String(a.start || '').match(/(\d{4}-\d\d-\d\d)[ T](\d\d:\d\d)/); return m ? `${fmtDay(m[1])} · ${m[2]}` : esc(a.start || ''); })();
   const isRace = a.eventType === 'race' || /race/i.test(a.name || '');
   const rw = a.runWalkEst;   // same timer time as everything else on this page
@@ -2180,8 +2202,8 @@ function renderActivity() {
       <div class="act-big">
         <div><b class="num">${km1(km)}</b><small>km</small></div>
         <div><b class="num">${fmtDur(timeS)}</b><small>time${a.elapsedS && a.elapsedS - timeS > 5 ? ` · ${fmtDur(a.elapsedS)} elapsed` : ''}</small></div>
-        <div><b class="num">${wPace ? paceStr(wPace) : '—'}</b><small>/km${W ? ' workout' : ''}</small></div>
-        <div><b class="num">${wHr ? Math.round(wHr) : '—'}</b><small>${W ? 'bpm workout' : 'avg bpm'}</small></div>
+        <div><b class="num">${pace ? paceStr(pace) : '—'}</b><small>/km avg${W ? ` · ${paceStr(W.paceS)} main block` : ''}</small></div>
+        <div><b class="num">${avgHr ? Math.round(avgHr) : '—'}</b><small>avg bpm${W && W.hr ? ` · ${Math.round(W.hr)} main block` : ''}</small></div>
       </div>
     ${W ? `<div class="phasebar">${a.phases.map(p => `<span class="ph ph-${p.kind}" style="flex:${p.timeS}"><b>${{ warmup: 'Warm-up', workout: 'Workout', cooldown: 'Cool-down' }[p.kind]}</b> ${km1(p.distM / 1000)} km · ${p.paceS ? paceStr(p.paceS) : '—'}</span>`).join('')}</div>
       <p class="desc fine" style="margin:6px 2px 0">${a.phaseSource === 'workout' ? 'From your Garmin structured workout laps.' : 'Estimated from km pace: slower opening and closing kms. Run a Garmin structured workout for exact boundaries.'} Whole run: ${km1(km)} km at ${paceStr(pace)}/km, ${avgHr ? Math.round(avgHr) : '—'} bpm.</p>` : ''}
@@ -2275,7 +2297,7 @@ function runCharts(a, rw, rwTot) {
   };
   const hits = Array.from({ length: cols }, (_, i) => { const d = (i + 0.5) / cols * maxD; return `<rect class="hit" x="${L + i * colW}" y="0" width="${colW}" height="${H}" fill="transparent" data-tip="${esc(tipAt(d))}"/>`; }).join('');
 
-  const phaseSvg = (isRun && a.phases && a.phases.length > 1 ? a.phases.filter(p => p.kind !== 'workout') : []).map(p => `<rect x="${x(p.d0)}" y="0" width="${Math.max(1, x(p.d0 + p.distM) - x(p.d0))}" height="${H}" fill="url(#wucd)"/>`).join('');
+  const phaseSvg = (isRun ? (realPhases(a) || []).filter(p => p.easy) : []).map(p => `<rect x="${x(p.d0)}" y="0" width="${Math.max(1, x(p.d0 + p.distM) - x(p.d0))}" height="${H}" fill="url(#wucd)"/>`).join('');
   const kmStepC = maxD > 15000 ? 5 : maxD > 6000 ? 2 : 1;
   const unitX = isRun ? 1000 : 60 * (maxD > 5400 ? 30 : maxD > 1800 ? 15 : 10), stepX = isRun ? kmStepC : 1;   // km, or 10/15/30-minute marks
   let xTicks = '';
@@ -2346,7 +2368,7 @@ function runCharts(a, rw, rwTot) {
         <g transform="translate(0,16)">${ticks}</g></svg>
       ${legend ? `<div class="legend" style="margin-top:2px">${legend}</div>` : ''}
     </div>
-    <p class="desc fine" style="margin-top:4px">${a.phases && a.phases.length > 1 ? 'Striped ends = warm-up and cool-down; amber = walking or stopped.' : 'Shaded stretches are walking or stopped.'}${(a.targets || []).length ? ' Grey area under the line = your workout target, as on Garmin.' : ''} Tap any chart to read every metric at that point.</p>`;
+    <p class="desc fine" style="margin-top:4px">${(realPhases(a) || []).some(p => p.easy) ? 'Striped = easy warm-up/cool-down; amber = walking or stopped.' : 'Shaded stretches are walking or stopped.'}${(a.targets || []).length ? ' Grey area under the line = your workout target, as on Garmin.' : ''} Tap any chart to read every metric at that point.</p>`;
 }
 
 function actTrace(a) {
@@ -2439,7 +2461,7 @@ async function exportActivityPdf(id) {
     // phones and tablets: the share sheet (has Save to Files); computers: a normal download
     const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     if (mobile && file && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: a.name || 'Activity report' }); }
+      try { await navigator.share({ files: [file] }); }   // files only: a title makes iOS save an extra little text file
       catch (e) { if (e && e.name !== 'AbortError') downloadBlob(blob, name); }
     } else downloadBlob(blob, name);
   } catch (e) { toast(String(e && e.message || e)); }
@@ -2494,12 +2516,13 @@ function buildActivityPdf(jsPDF, a) {
   // ---- workout overview tiles (4 × 2)
   section('Workout overview');
   const avgHr = a.avg && a.avg.hr ? Math.round(a.avg.hr) : a.avgHR, maxHr = a.maxHrFit || a.maxHR;
-  const wPace = a.work && a.work.paceS ? a.work.paceS : (a.avg && a.avg.paceS) || null;
+  const avgPace = (a.avg && a.avg.paceS) || (distM ? timeS / (distM / 1000) : null);   // timer time / distance, as Garmin shows it
+  const TW = trueWork(a);   // the main block, only when a warm-up/cool-down step really was easy
   const tiles = [
-    ['Distance', distM ? `${(distM / 1000).toFixed(2)} km` : '—', a.work && a.phases ? `workout ${(a.work.distM / 1000).toFixed(2)} km` : ''],
+    ['Distance', distM ? `${(distM / 1000).toFixed(2)} km` : '—', TW ? `main block ${(TW.distM / 1000).toFixed(2)} km` : ''],
     ['Duration', fmtDur(timeS), a.elapsedS && a.elapsedS - timeS > 5 ? `${fmtDur(a.elapsedS)} elapsed` : 'moving time'],
-    ['Pace', run && wPace ? `${paceStr(wPace)} /km` : '—', run ? (a.work && a.phases ? `workout · avg ${paceStr(a.avg.paceS)}` : a.gapSpeed ? `GAP ${paceStr(1000 / a.gapSpeed)}` : 'average') : 'n/a for this sport'],
-    ['Heart rate', avgHr ? `${avgHr} bpm` : '—', maxHr ? `max ${maxHr} bpm` : ''],
+    ['Pace', run && avgPace ? `${paceStr(avgPace)} /km` : '—', run ? [TW ? `main block ${paceStr(TW.paceS)}` : '', a.gapSpeed ? `GAP ${paceStr(1000 / a.gapSpeed)}` : ''].filter(Boolean).join(' · ') || 'average' : 'n/a for this sport'],
+    ['Heart rate', avgHr ? `${avgHr} bpm` : '—', [maxHr ? `max ${maxHr}` : '', TW && TW.hr ? `main block ${Math.round(TW.hr)}` : ''].filter(Boolean).join(' · ')],
     ['Calories', a.calories ? `${Math.round(a.calories).toLocaleString()} kcal` : '—', a.sweatMl ? `sweat ~${Math.round(a.sweatMl)} ml` : ''],
     ['Elevation', a.elevGain != null ? `+${Math.round(a.elevGain)} m` : '—', a.elevLoss != null ? `-${Math.round(a.elevLoss)} m descent` : ''],
     ['Vertical oscillation', a.vertOscCm ? `${(+a.vertOscCm).toFixed(1)} cm` : a.avg && a.avg.vo ? `${a.avg.vo.toFixed(1)} cm` : '—', a.vertRatio ? `ratio ${(+a.vertRatio).toFixed(1)}%` : ''],
@@ -2541,13 +2564,15 @@ function buildActivityPdf(jsPDF, a) {
       const pad = (hi - lo) * 0.12; lo -= pad; hi += pad;
       (a.targets || []).filter(t => (m.k === 1 && t.kind === 'pace') || (m.k === 2 && t.kind === 'hr')).forEach(t => { lo = Math.min(lo, t.lo); hi = Math.max(hi, t.hi); });
       const yv = v => { const f = (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo); return m.inv ? y + 4 + CH * f : y + 4 + CH * (1 - f); };
-      const avgV = vals.reduce((s, v) => s + v, 0) / vals.length;
+      // averages match the overview (Garmin's timer-time averages), not a plain mean of chart samples
+      const AV = a.avg || {}, avgFixed = { 1: avgPace, 2: AV.hr, 3: AV.cad, 4: AV.step, 5: AV.gct, 8: AV.pw, 10: AV.vo }[m.k];
+      const avgV = avgFixed || vals.reduce((s, v) => s + v, 0) / vals.length;
       font(8.5, 'bold', RC.ink); fill(m.c); doc.circle(MG + 1.2, y + 0.9 - 0.3, 1.1, 'F'); text(m.name, MG + 3.6, y + 1.5);
       font(7.5, 'normal', RC.ink2); text(`avg ${m.fmt(avgV)} ${m.unit}`, R, y + 1.5, { align: 'right' });
       const top = y + 4;
       fill('#F4F5F9'); doc.rect(L, top, R - L, CH, 'F');
       // warm-up / cool-down shading and workout targets
-      (a.phases || []).filter(p => p.kind !== 'workout' && p.t0 != null).forEach(p => { fill('#E6E8EF'); doc.rect(x(p.t0), top, Math.max(0.4, x(p.t0 + p.timeS) - x(p.t0)), CH, 'F'); });
+      (realPhases(a) || []).filter(p => p.easy && p.t0 != null).forEach(p => { fill('#E6E8EF'); doc.rect(x(p.t0), top, Math.max(0.4, x(p.t0 + p.timeS) - x(p.t0)), CH, 'F'); });
       (a.targets || []).filter(t => (m.k === 1 && t.kind === 'pace') || (m.k === 2 && t.kind === 'hr')).forEach(t => {
         const t0 = (tr.find(p => p[0] >= t.d0) || tr[0])[7], t1 = (tr.find(p => p[0] >= t.d1) || tr[tr.length - 1])[7];
         const ya = yv(m.inv ? t.lo : t.hi); fill('#D5D8E2'); doc.rect(x(t0), ya, x(t1) - x(t0), top + CH - ya, 'F');
@@ -2581,36 +2606,48 @@ function buildActivityPdf(jsPDF, a) {
     }
   }
 
-  // ---- detailed splits
-  const groups = a.phases && a.phases.length > 1 ? a.phases.map(p => ({ label: { warmup: 'Warm-up', workout: 'Workout', cooldown: 'Cool-down' }[p.kind], rows: p.splits || [] })) : [{ label: null, rows: a.splits || [] }];
-  if (run && groups.some(g => g.rows.length)) {
+  // ---- detailed splits: one continuous km 1–N table; Garmin's step names kept as a column
+  const RP = realPhases(a), splitsAll = a.splits || [];
+  const stepOf = mid => { if (!RP) return ''; const p = RP.find(q => mid >= q.d0 && mid < q.d0 + q.distM) || RP[RP.length - 1]; return STEP_LABEL[p.kind] + (p.kind !== 'workout' && !p.easy ? '*' : ''); };
+  if (run && splitsAll.length) {
     section('Detailed splits');
-    const all = groups.flatMap(g => g.rows);
-    const has = k => all.some(r => r[k] != null && r[k] > 0);
+    let cum = 0; const rows = splitsAll.map(r => { const mid = cum + r.distM / 2; cum += r.distM; return { ...r, step: RP ? stepOf(mid) : '' }; });
+    const has = k => rows.some(r => r[k] != null && r[k] > 0);
     const cols = [
-      ['Km', 12, r => r.partial ? (r.distM / 1000).toFixed(2) : String(r.km)],
-      ['Time', 16, r => fmtDur(r.timeS)], ['Pace', 15, r => paceStr(r.timeS / (r.distM / 1000))],
-      ['Avg HR', 14, r => r.hr ? Math.round(r.hr) : '—'], has('maxHr') && ['Max HR', 14, r => r.maxHr || '—'],
-      has('cad') && ['Cadence', 15, r => Math.round(r.cad)], has('step') && ['Stride m', 15, r => r.step.toFixed(2)],
-      has('gct') && ['GCT ms', 14, r => Math.round(r.gct)], has('vo') && ['VO cm', 13, r => r.vo.toFixed(1)],
-      has('pw') && ['Power W', 15, r => Math.round(r.pw)], (has('up') || has('down')) && ['Elev m', 15, r => `+${r.up || 0}/-${r.down || 0}`]
+      ['Km', 11, r => r.partial ? (r.distM / 1000).toFixed(2) : String(r.km)],
+      RP && ['Garmin step', 18, r => r.step],
+      ['Time', 14, r => fmtDur(r.timeS)], ['Pace', 13, r => paceStr(r.timeS / (r.distM / 1000))],
+      ['Avg HR', 12, r => r.hr ? Math.round(r.hr) : '—'], has('maxHr') && ['Max HR', 12, r => r.maxHr || '—'],
+      has('cad') && ['Cadence', 13, r => Math.round(r.cad)], has('step') && ['Stride', 12, r => r.step.toFixed(2)],
+      has('gct') && ['GCT ms', 12, r => Math.round(r.gct)], has('vo') && ['VO cm', 11, r => r.vo.toFixed(1)],
+      has('pw') && ['Power', 12, r => Math.round(r.pw)], (has('up') || has('down')) && ['Elev m', 14, r => `+${r.up || 0}/-${r.down || 0}`]
     ].filter(Boolean);
-    const total = cols.reduce((s, c) => s + c[1], 0), scale = CW / total;
+    const scale = CW / cols.reduce((s, c) => s + c[1], 0);
     const head = () => { ensure(10); fill(RC.navy); doc.rect(MG, y - 3.6, CW, 5.4, 'F'); font(7, 'bold', '#FFFFFF'); let cx = MG + 1.5; cols.forEach(c => { text(c[0], cx, y); cx += c[1] * scale; }); y += 4.4; };
     head();
-    let zebra = false;
-    groups.forEach(g => {
-      if (!g.rows.length) return;
-      if (g.label) { ensure(6); font(7.5, 'bold', RC.ink); text(g.label, MG + 1.5, y + 0.6); y += 4.4; }
-      g.rows.forEach(r => {
-        if (y + 4.4 > BOTTOM) { doc.addPage(); y = MG + 3.6; head(); }
-        if (zebra) { fill('#F4F5F9'); doc.rect(MG, y - 3.1, CW, 4.4, 'F'); } zebra = !zebra;
-        font(7.5, 'normal', RC.ink); let cx = MG + 1.5;
-        cols.forEach(c => { let v = ''; try { v = c[2](r); } catch (e) { v = '—'; } text(String(v), cx, y); cx += c[1] * scale; });
-        y += 4.4;
-      });
+    rows.forEach((r, i) => {
+      if (y + 4.4 > BOTTOM) { doc.addPage(); y = MG + 3.6; head(); }
+      if (i % 2) { fill('#F4F5F9'); doc.rect(MG, y - 3.1, CW, 4.4, 'F'); }
+      font(7.5, 'normal', RC.ink); let cx = MG + 1.5;
+      cols.forEach(c => { let v = ''; try { v = c[2](r); } catch (e) { v = '—'; } text(String(v), cx, y); cx += c[1] * scale; });
+      y += 4.4;
     });
-    y += 2;
+    if (RP && RP.some(p => p.kind !== 'workout' && !p.easy)) { font(7, 'normal', RC.ink3); text('* Garmin labelled this a warm-up/cool-down step, but it was run at the same effort as the main block, so it is analysed as part of the run.', MG, y + 0.6, { maxWidth: CW }); y += 5; }
+    y += 1.5;
+
+    // Garmin's own workout steps, as the watch recorded them
+    if (RP) {
+      ensure(18); font(8, 'bold', RC.ink); text('Garmin workout steps', MG, y + 1); y += 5;
+      const sc = [['Step', 30], ['Distance', 22], ['Time', 22], ['Pace', 18], ['Avg HR', 16], ['Cadence', 16], ['Effort', 40]], sk = CW / sc.reduce((s, c) => s + c[1], 0);
+      fill(RC.bg); doc.rect(MG, y - 3.4, CW, 5, 'F'); font(7, 'bold', RC.ink2); let cx = MG + 1.5; sc.forEach(c => { text(c[0], cx, y); cx += c[1] * sk; }); y += 4.4;
+      RP.forEach(p => {
+        ensure(5);
+        const v = [STEP_LABEL[p.kind], `${(p.distM / 1000).toFixed(2)} km`, fmtDur(p.timeS), p.paceS ? paceStr(p.paceS) : '—', p.hr ? Math.round(p.hr) : '—', p.cad ? Math.round(p.cad) : '—',
+          p.kind === 'workout' ? 'main block' : p.easy ? 'easy, as labelled' : 'same effort as the run'];
+        font(7.5, 'normal', RC.ink); cx = MG + 1.5; v.forEach((t2, k) => { text(String(t2), cx, y); cx += sc[k][1] * sk; }); y += 4.4;
+      });
+      y += 2;
+    }
   }
 
   // ---- HR zones
