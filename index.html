@@ -246,6 +246,7 @@ p.sub{margin:0 0 14px;color:var(--ink-2)}
 .howbuilt{margin:8px 0 2px;font-size:13.5px}.howbuilt summary{cursor:pointer;color:var(--quality);font-weight:600}.howbuilt ul{margin:6px 0 0;padding-left:18px;color:var(--ink-2)}.howbuilt li{margin:3px 0}
 .reports .prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .reports .btn{flex:none;white-space:nowrap}
+.genrow{display:flex;justify-content:center;padding:6px 0 4px}.genrow .btn{min-width:200px}
 .adjnote{margin:2px 0 4px;font-size:12.5px;color:var(--race);font-weight:600}.adjnote s{color:var(--ink-3);font-weight:500}
 .planprop{margin-top:8px;padding:10px 12px;border:1.5px solid var(--quality);border-radius:10px;background:var(--card)}
 .planprop ul{margin:6px 0 8px;padding-left:18px;font-weight:600;font-size:14px}
@@ -443,7 +444,7 @@ dl.facts dd{margin:2px 0 0;font:700 17px var(--f-display);overflow-wrap:anywhere
 <script>
 /* ================= API ================= */
 const IS_PREVIEW = !!window.TELEMETRY_SNAPSHOT;
-const APP_VERSION = '2026.11.03-8';
+const APP_VERSION = '2026.11.13-2';
 /* Connection to your Apps Script (saved on this device only) */
 const CONF = {
   get url() { try { return localStorage.getItem('telemetry.url') || ''; } catch (e) { return ''; } },
@@ -880,6 +881,8 @@ function filterBar() {
    Closed by default; tap the title to open, tap again to close. Remembered on this device. */
 state.open = new Set();
 try { JSON.parse(localStorage.getItem('telemetry.open') || '[]').forEach(k => state.open.add(k)); } catch (e) {}
+// every time the app opens: Summary Report rolled down, the AI sections rolled up
+['ai-coach', 'ai-week', 'ai-race'].forEach(k => state.open.delete(k)); state.open.add('reports');
 function fold(id, title, body, sub) {
   return `<details class="fold" data-fold="${id}"${state.open.has(id) ? ' open' : ''}>
     <summary><span class="fold-t">${title}</span>${sub ? `<span class="fold-s">${sub}</span>` : ''}<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
@@ -888,8 +891,6 @@ function fold(id, title, body, sub) {
 document.addEventListener('toggle', e => {
   const d = e.target; if (!d.matches || !d.matches('details.fold')) return;
   d.open ? state.open.add(d.dataset.fold) : state.open.delete(d.dataset.fold);
-  if (d.open && d.dataset.fold === 'ai-week') loadWeekly();
-  if (d.open && d.dataset.fold === 'ai-race') loadRace();
   try { localStorage.setItem('telemetry.open', JSON.stringify([...state.open])); } catch (_) {}
 }, true);
 
@@ -1125,11 +1126,11 @@ function aiCard() {
     return `<div class="card aicard ai-off"><div class="mono">AI coach</div><p class="desc" style="margin:4px 0 0">Not set up yet. Add AI.gs with your Claude API key in Apps Script, then deploy a new version.</p></div>`;
   }
   const status = d && d.status ? `<span class="aidot ai-${esc(d.status)}"></span>` : '';
+  if (!d && !A.loading && !A.error && !state.ask.answer && !state.ask.loading) return `<div class="genrow"><button class="btn" id="aiRefresh" type="button">Generate summary</button></div>`;
   return `<div class="card aicard" aria-live="polite">
     <div class="ai-top"><span class="mono">${esc(STAGE_LABEL[A.stage] || 'Today')}</span>
-      <button class="btn sm" id="aiRefresh" type="button" ${A.loading ? 'disabled' : ''}>${A.loading && !A.peek ? 'Writing…' : d ? 'Summarize again' : 'Summarize'}</button></div>
+      <button class="btn sm" id="aiRefresh" type="button" ${A.loading ? 'disabled' : ''}>${A.loading ? 'Writing…' : d ? 'Generate again' : 'Generate summary'}</button></div>
     ${A.error ? `<p class="desc warn-t">Couldn't write today's summary: ${esc(A.error)}</p>` :
-      !d && A.none ? `<p class="desc" style="margin:6px 0 2px">No summary yet for ${esc((STAGE_LABEL[A.stage] || 'today').toLowerCase())}. Tap <b>Summarize</b> when you want one; nothing is written (or paid for) until you do.</p>` :
       !d ? `<div class="ai-skel"><i></i><i></i><i></i></div>` : `
       <div class="ai-head">${status}<h3>${esc(d.headline || '')}</h3>${d.score != null && A.runDoneToday !== false ? `<span class="ai-score num">${esc(d.score)}<small>/10</small></span>` : ''}</div>
       <ul class="ai-lines">${(d.summary || []).slice(0, 3).map(l => `<li>${esc(l)}</li>`).join('')}</ul>
@@ -1156,8 +1157,9 @@ function weeklyFold() {
     : S.error && S.key === wk ? `<div class="card empty">${esc(S.error)}</div>`
     : d ? `<div class="card aicard"><div class="ai-head"><h3>${esc(d.headline)}</h3>${d.score != null ? `<span class="ai-score num">${esc(d.score)}<small>/10</small></span>` : ''}</div>
         <ul class="ai-lines">${(d.summary || []).map(l => `<li>${esc(l)}</li>`).join('')}</ul><div class="ai-more">${mdLite(d.details)}</div></div>`
-    : `<div class="card empty">No review for the week of ${esc(fmtShort(wk))} yet.</div>`;
-  const btn = `<div style="display:flex;justify-content:flex-end"><button class="btn sm" id="weekGen" type="button" ${S.loading ? 'disabled' : ''}>${S.loading && !S.peek ? 'Writing…' : d ? 'Summarize again' : 'Summarize week'}</button></div>`;
+    : '';
+  const btn = d || S.loading || (S.error && S.key === wk) ? `<div style="display:flex;justify-content:flex-end"><button class="btn sm" id="weekGen" type="button" ${S.loading ? 'disabled' : ''}>${S.loading ? 'Writing…' : d ? 'Summarize again' : 'Try again'}</button></div>`
+    : `<div class="genrow"><button class="btn" id="weekGen" type="button">Summarize week</button></div>`;
   return fold('ai-week', 'Weekly review', body + btn, `week of ${esc(fmtShort(wk))}`);
 }
 async function loadWeekly(force) {
@@ -1266,13 +1268,11 @@ function renderCoach() {
     <p class="hello">${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</p>
     ${dayNote()}
     <div class="subrow"><p class="sub" style="margin:0">Week ${M.current.n} of ${M.weeks.length}</p><button class="linkbtn" id="garminBtn">↻ Sync Garmin</button></div>
-    <h2 class="sec">Summary Report</h2>
-    <p class="sub" style="margin-top:-4px">Your latest Garmin activities as a PDF report.</p>
-    ${recentReports()}
-    ${fold('ai-coach', 'AI Coach', aiCard() + raceFold(), state.ai.loading && !state.ai.peek ? 'writing…' : state.ai.data ? esc(STAGE_LABEL[state.ai.stage] || 'summary ready') : 'no summary yet')}
+    ${fold('reports', 'Summary Report', `<p class="desc" style="margin:0">Your latest Garmin activities as a PDF report.</p>${recentReports()}`, 'latest 3')}
+    ${fold('ai-coach', 'AI Coach', aiCard() + raceFold(), state.ai.loading ? 'writing…' : state.ai.data ? esc(STAGE_LABEL[state.ai.stage] || 'summary ready') : 'on demand')}
     ${weeklyFold()}
     <p class="mono" style="text-align:center;margin:8px 0 0">Telemetry build ${APP_VERSION}</p>`;
-  setTimeout(() => { loadRecentActs(); loadAiSummary(false); if (state.open.has('ai-week')) loadWeekly(); if (state.open.has('ai-race')) loadRace(); }, 0);
+  setTimeout(() => { loadRecentActs(); }, 0);   // AI only runs when you tap a button
 }
 
 function runRow(r) {
@@ -2924,18 +2924,32 @@ function measureNav() { const n = document.querySelector('nav.tabs'); if (n && n
 try { measureNav(); setTimeout(measureNav, 1500); window.addEventListener('resize', measureNav); } catch (e) {}
 
 /* ================= actions ================= */
-async function syncGarminNow() {
+// quiet = the automatic sync when the app opens: no toast unless something new arrived
+async function syncGarminNow(quiet) {
+  if (state.syncing) return; state.syncing = true;
   setSync('busy', 'Syncing');
   try {
     const r = await API.call('syncGarmin');
-    if (r && r.data) { RAW = r.data; M = build(RAW); render(); }
+    try { localStorage.setItem('telemetry.lastSync', String(Date.now())); } catch (e) {}
+    // forget the activities this screen already had, so a workout that just arrived shows up everywhere
+    state.actCache = {}; state.recentActs = null; state.recentLoading = false;
+    if (!state.actId) state.act = null;
+    if (r && r.data) { RAW = r.data; M = build(RAW); }
+    render(); if (state.tab === 'coach') loadRecentActs(); if (state.tab === 'activity' && !state.actId) loadActivity(null);
     setSync('', IS_PREVIEW ? 'Preview' : 'Synced');
-    const n = (r.added || []).length;
-    toast(r.errors && r.errors.length && !n ? r.errors[0] : `${n ? `${n} new activit${n === 1 ? 'y' : 'ies'} from Garmin` : 'Already up to date'}${r.sleepFilled ? `, sleep on ${r.sleepFilled} days` : ''}`);
+    const n = (r.added || []).length, errs = r.errors || [];
+    if (!quiet || n) toast(`${n ? `${n} new activit${n === 1 ? 'y' : 'ies'} from Garmin` : 'Already up to date'}${r.sleepFilled ? `, sleep on ${r.sleepFilled} days` : ''}${errs.length ? ` · ${errs.length} warning${errs.length > 1 ? 's' : ''}: ${errs[0]}` : ''}`);
   } catch (e) {
     setSync('err', 'Not synced');
-    toast('Garmin sync failed: ' + (e && e.message ? e.message : e));
+    if (!quiet) toast('Garmin sync failed: ' + (e && e.message ? e.message : e));
   }
+  state.syncing = false;
+}
+// sync with Garmin when the app opens or comes back, if the last sync was over 20 minutes ago
+function syncIfStale() {
+  if (IS_PREVIEW || !CONF.ready || !M) return;
+  let last = 0; try { last = +localStorage.getItem('telemetry.lastSync') || 0; } catch (e) {}
+  if (Date.now() - last > 20 * 60 * 1000) syncGarminNow(true);
 }
 
 let toastT;
@@ -3153,8 +3167,8 @@ document.addEventListener('click', e => {
 });
 // roll over to the next day at DAY_START even if the app stays open
 setInterval(() => { if (M && myDayNow().day !== TODAY) render(); }, 5 * 60 * 1000);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); if (document.visibilityState === 'visible' && !IS_PREVIEW && CONF.ready && M) API.call('getData').then(d => { RAW = d; M = build(d); render(); setSync('', 'Synced'); }).catch(() => {}); });
-load().finally(splashDone);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); if (document.visibilityState === 'visible' && !IS_PREVIEW && CONF.ready && M) API.call('getData').then(d => { RAW = d; M = build(d); render(); setSync('', 'Synced'); syncIfStale(); }).catch(() => {}); });
+load().finally(() => { splashDone(); setTimeout(syncIfStale, 1500); });
 </script>
 </body>
 </html>
